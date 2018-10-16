@@ -1,15 +1,27 @@
 'use strict';
 
 var Alexa = require('alexa-sdk');
+var https = require('https');
 
-var streamInfo = {
-  title: 'Audio Stream Starter',
-  subtitle: 'A starter template for an Alexa audio streaming skill.',
-  cardContent: "Get more details at: https://skilltemplates.com",
-  url: 'https://streaming.radionomy.com/RadioXUS?lang=en-US&appName=iTunes.m3u',
+var radioStreamInfo = {
+  title: 'Radio Südostschweiz Livestream',
+  subtitle: 'Alexa audio streaming skill for Radio Südostschweiz.',
+  cardContent: "Radio Südostschweiz Alexa Skill",
+  url: 'https://swisstxt2-lh.akamaihd.net/i/grischa_1@144003/master.m3u8',
   image: {
-    largeImageUrl: 'https://s3.amazonaws.com/cdn.dabblelab.com/img/alexa-card-lg.png',
-    smallImageUrl: 'https://s3.amazonaws.com/cdn.dabblelab.com/img/alexa-card-sm.png'
+    largeImageUrl: 'https://www.suedostschweiz.ch/modules/custom/so_radio/images/microphon_off.png',
+    smallImageUrl: 'https://www.suedostschweiz.ch/modules/custom/so_radio/images/microphon_off.png'
+  }
+};
+
+//Standard Podcast
+
+var podcasts = {
+  "rso-im-gsproech": {
+    title: 'Podcasts von Radio Südostschweiz.',
+    subtitle: 'Alexa podcast streaming skill for Radio Südostschweiz',
+    name: 'RSO im Gspröch',
+    podcastURL: 'https://www.suedostschweiz.ch/podcasts/feed/1897039'
   }
 };
 
@@ -26,10 +38,18 @@ exports.handler = (event, context, callback) => {
 
 var handlers = {
   'LaunchRequest': function() {
-    this.emit('PlayStream');
+    this.emit('PlayRadioIntent');
   },
-  'PlayStream': function() {
-    this.response.speak('Enjoy.').audioPlayerPlay('REPLACE_ALL', streamInfo.url, streamInfo.url, null, 0);
+  'PlayRadioIntent': function() {
+    this.response.speak('Willkommen bei Radio Südostschweiz. Viel Spass').audioPlayerPlay('REPLACE_ALL', radioStreamInfo.url, radioStreamInfo.url, null, 0);
+    this.emit(':responseReady');
+  },
+  'PlayPodcastIntent':function() {
+    this.response.speak('Ich starte nun den Podcast' + podcasts["rso-im-gsproech"].name);
+    this.emit(':responseReady');
+  },
+  'SearchPodcastIntent': function(){
+    this.response.speak('Um alle Podcasts aufzulisten sage: "Alexa, liste mir alle Podcasts auf."');
     this.emit(':responseReady');
   },
   'AMAZON.HelpIntent': function() {
@@ -45,7 +65,7 @@ var handlers = {
     this.callback(null, null)
   },
   'Unhandled': function() {
-    this.response.speak('Sorry. Something went wrong.');
+    this.response.speak('Entschuldigung, etwas ist schief gelaufen.');
     this.emit(':responseReady');
   },
   'AMAZON.NextIntent': function() {
@@ -63,7 +83,7 @@ var handlers = {
     this.emit('AMAZON.StopIntent');
   },
   'AMAZON.StopIntent': function() {
-    this.response.speak('Okay. I\'ve stopped the stream.').audioPlayerStop();
+    this.response.speak('Okay. Ich habe alles abgebrochen').audioPlayerStop();
     this.emit(':responseReady');
   },
   'AMAZON.ResumeIntent': function() {
@@ -82,25 +102,25 @@ var handlers = {
     this.emit('AMAZON.StartOverIntent');
   },
   'AMAZON.StartOverIntent': function() {
-    this.response.speak('Sorry. I can\'t do that yet.');
+    this.response.speak('Sorry. Das kann ich momentan nicht machen.');
     this.emit(':responseReady');
   },
   'PlayCommandIssued': function() {
 
     if (this.event.request.type === 'IntentRequest' || this.event.request.type === 'LaunchRequest') {
-      var cardTitle = streamInfo.subtitle;
-      var cardContent = streamInfo.cardContent;
-      var cardImage = streamInfo.image;
+      var cardTitle = radioStreamInfo.subtitle;
+      var cardContent = radioStreamInfo.cardContent;
+      var cardImage = radioStreamInfo.image;
       this.response.cardRenderer(cardTitle, cardContent, cardImage);
     }
 
-    this.response.speak('Enjoy.').audioPlayerPlay('REPLACE_ALL', streamInfo.url, streamInfo.url, null, 0);
+    this.response.speak('Ich starte nun den Radio. Viel Spass.').audioPlayerPlay('REPLACE_ALL', radioStreamInfo.url, radioStreamInfo.url, null, 0);
     this.emit(':responseReady');
   },
   'PauseCommandIssued': function() {
     this.emit('AMAZON.StopIntent');
   }
-}
+};
 
 var audioEventHandlers = {
   'PlaybackStarted': function() {
@@ -113,11 +133,11 @@ var audioEventHandlers = {
     this.emit(':responseReady');
   },
   'PlaybackNearlyFinished': function() {
-    this.response.audioPlayerPlay('REPLACE_ALL', streamInfo.url, streamInfo.url, null, 0);
+    this.response.audioPlayerPlay('REPLACE_ALL', radioStreamInfo.url, radioStreamInfo.url, null, 0);
     this.emit(':responseReady');
   },
   'PlaybackFailed': function() {
     this.response.audioPlayerClearQueue('CLEAR_ENQUEUED');
     this.emit(':responseReady');
   }
-}
+};

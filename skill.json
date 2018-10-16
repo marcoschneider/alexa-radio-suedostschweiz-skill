@@ -1,20 +1,21 @@
 {
-  "skillManifest": {
+  "manifest": {
     "publishingInformation": {
       "locales": {
-        "en-US": {
-          "summary": "A starter template for an Alexa audio streaming skill.",
+        "de-DE": {
+          "summary": "Der Radio Südostschweiz Skill für ihren Radio der Region.",
           "examplePhrases": [
-            "Alexa, open Audio Steam Starter",
-            "Alexa, play Audio Steam Starter",
-            "Alexa, ask Audio Steam Starter to play"
+            "Alexa, starte radio südostschweiz",
+            "Alexa, spiele den Podcast von Radio Südostschweiz",
+            "Alexa, frage radio südostschweiz um den Radio zu starten"
           ],
           "keywords": [
             "audio streaming",
-            "music",
-            "live music"
+            "musik",
+            "live musik",
+            "podcasts"
           ],
-          "name": "Audio Steam Starter",
+          "name": "Radio Südostschweiz",
           "description": "A starter template for an Alexa audio streaming skill.",
           "smallIconUri": "https://s3.amazonaws.com/cdn.dabblelab.com/img/skill-template-default-sm.png",
           "largeIconUri": "https://s3.amazonaws.com/cdn.dabblelab.com/img/skill-template-default-lg.png"

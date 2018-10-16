@@ -1,0 +1,71 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "radio südostschweiz",
+      "intents": [
+        {
+          "name": "PlayRadioIntent",
+          "slots": [],
+          "samples": [
+            "spiele radio",
+            "starte radio",
+            "spiele radio südostschweiz",
+            "radio abspielen",
+            "frage radio südostschweiz um den radio zu starten"
+          ]
+        },
+        {
+          "name": "PlayPodcastIntent",
+          "slots": [],
+          "samples": [
+            "spiele den podcast von südostschweiz",
+            "starte podcasts",
+            "spiele radio südostschweiz"
+          ]
+        },
+        {
+        "name": "SearchPodcastIntent",
+        "slots": [],
+        "samples": [
+          "liste mir alle Podcasts auf",
+          "welche podcasts gibt es",
+          "liste"
+        ]
+        },
+        {
+          "name": "AMAZON.PauseIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.ResumeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": [
+            "hilf mir",
+            "wie funktioniert das",
+            "was muss ich machen"
+          ]
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StartOverIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        }
+      ],
+      "types": []
+    }
+  }
+}
