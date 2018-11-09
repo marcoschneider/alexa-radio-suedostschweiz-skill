@@ -1,8 +1,7 @@
 'use strict';
 
 var Alexa = require('alexa-sdk');
-var libxmljs = require('libxmljs');
-var fs = require('fs');
+var parseString = require('xml2js').parseString;
 var https = require('https');
 
 var radioStreamInfo = {
@@ -31,16 +30,33 @@ var podcasts = {
   }
 };
 
-/*function getPodcastEpisodes(index) {
+function getPodcastEpisodes(index, callback) {
+  let podcast_url;
+
   https.get(podcasts[index].podcastURL, (resp) => {
-    var xmlDoc = libxmljs.parseXml(resp);
-    var children = xmlDoc.root().childNodes();
-    var child = children[0];
-    console.log(child);
+    let data = '';
+
+    // A chunk of data has been recieved.
+    resp.on('data', (chunk) => {
+      data += chunk;
+    });
+
+    // The whole response has been received. Print out the result.
+    resp.on('end', () => {
+      parseString(data, function (err, result) {
+        if (!err) {
+          podcast_url = result.rss.channel[0]["item"][0]["enclosure"][0]["$"]["url"];
+          callback(null, podcast_url);
+        } else {
+          callback(err, null);
+        }
+      });
+    });
+
   }).on("error", (err) => {
     console.log("Error: " + err.message);
   });
-}*/
+}
 
 exports.handler = (event, context, callback) => {
   var alexa = Alexa.handler(event, context, callback);
@@ -64,10 +80,22 @@ var handlers = {
   'PlayPodcastIntent':function() {
     var count = Object.keys(podcasts).length;
     if (count > 1) {
-      getPodcastEpisodes("0");
+      let that = this;
+      getPodcastEpisodes("0", function (err, podcast_url) {
+        if (err == null) {
+          console.log(podcast_url);
+          that.response.speak('Viel spass beim Podcast');
+          that.emit(':responseReady');
+          return;
+        } else {
+          console.log("Error: " + err);
+        }
+      });
     }else {
       this.response.speak('Ich starte nun den Podcast ' + podcasts[0].name);
+      this.emit(':responseReady');
     }
+    this.response.speak('Aus einem unbestimmten Grund konnte ich den Podcast nicht abspielen.');
     this.emit(':responseReady');
   },
   'SearchPodcastIntent': function(){
