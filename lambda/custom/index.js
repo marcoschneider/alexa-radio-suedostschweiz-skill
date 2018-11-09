@@ -1,6 +1,8 @@
 'use strict';
 
 var Alexa = require('alexa-sdk');
+var libxmljs = require('libxmljs');
+var fs = require('fs');
 var https = require('https');
 
 var radioStreamInfo = {
@@ -14,16 +16,31 @@ var radioStreamInfo = {
   }
 };
 
-//Standard Podcast
-
 var podcasts = {
-  "rso-im-gsproech": {
-    title: 'Podcasts von Radio Südostschweiz.',
-    subtitle: 'Alexa podcast streaming skill for Radio Südostschweiz',
-    name: 'RSO im Gspröch',
-    podcastURL: 'https://www.suedostschweiz.ch/podcasts/feed/1897039'
+  "0": {
+    "title": "Podcasts von Radio Südostschweiz.",
+    "subtitle": "Alexa podcast streaming skill for Radio Südostschweiz",
+    "name": "RSO im Gspröch",
+    "podcastURL": "https://www.suedostschweiz.ch/podcasts/feed/1897039"
+  },
+  "1": {
+    "title": "Podcasts von Radio Südostschweiz.",
+    "subtitle": "Alexa podcast streaming skill for Radio Südostschweiz",
+    "name": "100 Sekunden",
+    "podcastURL": "https://www.suedostschweiz.ch/podcasts/feed/1897039"
   }
 };
+
+/*function getPodcastEpisodes(index) {
+  https.get(podcasts[index].podcastURL, (resp) => {
+    var xmlDoc = libxmljs.parseXml(resp);
+    var children = xmlDoc.root().childNodes();
+    var child = children[0];
+    console.log(child);
+  }).on("error", (err) => {
+    console.log("Error: " + err.message);
+  });
+}*/
 
 exports.handler = (event, context, callback) => {
   var alexa = Alexa.handler(event, context, callback);
@@ -45,11 +62,16 @@ var handlers = {
     this.emit(':responseReady');
   },
   'PlayPodcastIntent':function() {
-    this.response.speak('Ich starte nun den Podcast' + podcasts["rso-im-gsproech"].name);
+    var count = Object.keys(podcasts).length;
+    if (count > 1) {
+      getPodcastEpisodes("0");
+    }else {
+      this.response.speak('Ich starte nun den Podcast ' + podcasts[0].name);
+    }
     this.emit(':responseReady');
   },
   'SearchPodcastIntent': function(){
-    this.response.speak('Um alle Podcasts aufzulisten sage: "Alexa, liste mir alle Podcasts auf."');
+    this.response.speak('');
     this.emit(':responseReady');
   },
   'AMAZON.HelpIntent': function() {
@@ -69,11 +91,11 @@ var handlers = {
     this.emit(':responseReady');
   },
   'AMAZON.NextIntent': function() {
-    this.response.speak('This skill does not support skipping.');
+    this.response.speak('Diese Skill unterstüzt das Überspringen von Songs nicht.');
     this.emit(':responseReady');
   },
   'AMAZON.PreviousIntent': function() {
-    this.response.speak('This skill does not support skipping.');
+    this.response.speak('Diese Skill unterstüzt das Überspringen von Songs nicht.');
     this.emit(':responseReady');
   },
   'AMAZON.PauseIntent': function() {

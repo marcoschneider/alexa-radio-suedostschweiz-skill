@@ -7,30 +7,39 @@
           "name": "PlayRadioIntent",
           "slots": [],
           "samples": [
-            "spiele radio",
-            "starte radio",
-            "spiele radio südostschweiz",
+            "spiele Radio",
+            "starte Radio",
+            "starte den Radio von Südostschweiz",
+            "spiele das Radio",
+            "radio Südostschweiz.",
+            "spiele Radio Südostschweiz",
             "radio abspielen",
-            "frage radio südostschweiz um den radio zu starten"
+            "frage Südostschweiz um den Radio zu starten"
           ]
         },
         {
           "name": "PlayPodcastIntent",
-          "slots": [],
+          "slots": [
+            {
+              "name": "podcast_name",
+              "type": "Podcastname"
+            }
+          ],
           "samples": [
-            "spiele den podcast von südostschweiz",
+            "spiele den Podcast von Radio Südostschweiz",
+            "starte podcast {podcast_name}",
             "starte podcasts",
-            "spiele radio südostschweiz"
+            "spiele den Podcast von Südostschweiz"
           ]
         },
         {
-        "name": "SearchPodcastIntent",
-        "slots": [],
-        "samples": [
-          "liste mir alle Podcasts auf",
-          "welche podcasts gibt es",
-          "liste"
-        ]
+          "name": "SearchPodcastIntent",
+          "slots": [],
+          "samples": [
+            "liste mir alle Podcasts auf",
+            "welche podcasts gibt es",
+            "liste"
+          ]
         },
         {
           "name": "AMAZON.PauseIntent",
@@ -65,7 +74,18 @@
           "samples": []
         }
       ],
-      "types": []
+      "types": [
+        {
+          "name": "Podcastname",
+          "values": [
+            {
+              "name": {
+                "value": "RSO im Gspröch"
+              }
+            }
+          ]
+        }
+      ]
     }
   }
 }
