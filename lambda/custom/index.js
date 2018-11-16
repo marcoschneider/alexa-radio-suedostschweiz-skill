@@ -1,10 +1,11 @@
 'use strict';
 
-var Alexa = require('alexa-sdk');
-var parseString = require('xml2js').parseString;
-var https = require('https');
+const Alexa = require('alexa-sdk');
+const parseString = require('xml2js').parseString;
+const https = require('https');
+const util = require('util');
 
-var radioStreamInfo = {
+let radioStreamInfo = {
   title: 'Radio Südostschweiz Livestream',
   subtitle: 'Alexa audio streaming skill for Radio Südostschweiz.',
   cardContent: "Radio Südostschweiz Alexa Skill",
@@ -15,11 +16,11 @@ var radioStreamInfo = {
   }
 };
 
-var podcasts = {
+let podcasts = {
   "0": {
     "title": "Podcasts von Radio Südostschweiz.",
     "subtitle": "Alexa podcast streaming skill for Radio Südostschweiz",
-    "name": "RSO im Gspröch",
+    "name": "R S O im Gespräch",
     "podcastURL": "https://www.suedostschweiz.ch/podcasts/feed/1897039"
   },
   "1": {
@@ -31,7 +32,7 @@ var podcasts = {
 };
 
 function getPodcastEpisodes(index, callback) {
-  let podcast_url;
+  let podcast_episode_url;
 
   https.get(podcasts[index].podcastURL, (resp) => {
     let data = '';
@@ -45,8 +46,13 @@ function getPodcastEpisodes(index, callback) {
     resp.on('end', () => {
       parseString(data, function (err, result) {
         if (!err) {
-          podcast_url = result.rss.channel[0]["item"][0]["enclosure"][0]["$"]["url"];
-          callback(null, podcast_url);
+          let podcast_episode_urls = [];
+          for (let i = 0; i < result.rss.channel[0]["item"].length; i++ ) {
+            podcast_episode_url = result.rss.channel[0]["item"][i]["enclosure"][0]["$"]["url"];
+            podcast_episode_urls.push(podcast_episode_url);
+          }
+          //console.log('Podcast Item: ' + util.inspect(podcast_urls, false, null, true));
+          callback(null, podcast_episode_urls);
         } else {
           callback(err, null);
         }
@@ -71,32 +77,46 @@ exports.handler = (event, context, callback) => {
 
 var handlers = {
   'LaunchRequest': function() {
-    this.emit('PlayRadioIntent');
+    this.emit(':ask', 'Willkommen bei Radio Südostschweiz. Was möchtest du tun?', 'Mit Alexa starte Radio Südostschweiz gelangst du zum Livestream. Um den Podcast zuhören, sage: Alexa starte Podcasts.');
   },
   'PlayRadioIntent': function() {
-    this.response.speak('Willkommen bei Radio Südostschweiz. Viel Spass').audioPlayerPlay('REPLACE_ALL', radioStreamInfo.url, radioStreamInfo.url, null, 0);
+    this.response.speak('Viel Spass.').audioPlayerPlay('REPLACE_ALL', radioStreamInfo.url, radioStreamInfo.url, null, 0);
     this.emit(':responseReady');
   },
   'PlayPodcastIntent':function() {
-    var count = Object.keys(podcasts).length;
+    let count = Object.keys(podcasts).length;
+    let that = this;
     if (count > 1) {
-      let that = this;
-      getPodcastEpisodes("0", function (err, podcast_url) {
+      /*let speechoutput = 'Hier die Liste der Podcasts. ';
+      for (let i = 0; i < count; i++) {
+        speechoutput += podcasts[""+ i +""].name + '. ';
+      }
+      console.log(speechoutput);
+      this.response.speak(speechoutput + 'Welchen Podcast möchtest du höhren?').listen('Sorry, ich habe dich nicht verstanden');
+      this.emit(':responseReady');*/
+      getPodcastEpisodes("0", function (err, podcast_episode_urls) {
         if (err == null) {
-          console.log(podcast_url);
-          that.response.speak('Viel spass beim Podcast');
+          that.attributes.podcasts = {'currentPodcastEpisode': 0};
+          that.response.speak('Viel Spass mit dem Podcast von Radio Südostschweiz.').audioPlayerPlay('REPLACE_ALL', podcast_episode_urls[0], podcast_episode_urls[0], null, 0);
           that.emit(':responseReady');
-          return;
         } else {
+          that.response.speak('Es ist ein Fehler mit dem aufrufen des Podcasts aufgetreten.');
+          that.emit(':responseReady');
           console.log("Error: " + err);
         }
       });
-    }else {
-      this.response.speak('Ich starte nun den Podcast ' + podcasts[0].name);
-      this.emit(':responseReady');
+    } else {
+      getPodcastEpisodes("0", function (err, podcast_episodes_url) {
+        if (err === null ) {
+          that.response.speak('Ich starte nun den Podcast ' + podcasts[0].name).audioPlayerPlay('REPLACE_ALL', podcast_episodes_url, podcast_episodes_url, null, 0);
+          that.emit(':responseReady');
+        } else {
+          that.response.speak('Es ist ein Fehler mit dem aufrufen des Podcasts aufgetreten.');
+          that.emit(':responseReady');
+          console.log("Error: " + err);
+        }
+      });
     }
-    this.response.speak('Aus einem unbestimmten Grund konnte ich den Podcast nicht abspielen.');
-    this.emit(':responseReady');
   },
   'SearchPodcastIntent': function(){
     this.response.speak('');
@@ -119,7 +139,9 @@ var handlers = {
     this.emit(':responseReady');
   },
   'AMAZON.NextIntent': function() {
-    this.response.speak('Diese Skill unterstüzt das Überspringen von Songs nicht.');
+
+
+    this.response.speak('Hier die nächste Podcast episode.');
     this.emit(':responseReady');
   },
   'AMAZON.PreviousIntent': function() {
