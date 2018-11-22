@@ -27,18 +27,27 @@
           ],
           "samples": [
             "spiele den Podcast von Radio Südostschweiz",
-            "starte podcast {podcast_name}",
-            "starte podcasts",
+            "starte den Podcast {podcast_name}",
+            "starte Podcasts",
             "spiele den Podcast von Südostschweiz"
           ]
         },
         {
           "name": "SearchPodcastIntent",
-          "slots": [],
+          "slots": [
+            {
+              "name": "podcast_name",
+              "type": "Podcastname"
+            }
+          ],
           "samples": [
             "liste mir alle Podcasts auf",
             "welche podcasts gibt es",
-            "liste"
+            "liste von Podcasts",
+            "starte {podcast_name}",
+            "spiele {podcast_name}",
+            "starte den Podcast {podcast_name} von Radio Südostschweiz",
+            "{podcast_name}"
           ]
         },
         {
@@ -79,8 +88,18 @@
           "name": "Podcastname",
           "values": [
             {
+              "id": "1",
               "name": {
-                "value": "RSO im Gspröch"
+                "value": "100 Sekunden"
+              }
+            },
+            {
+              "id": "0",
+              "name": {
+                "value": "RSO im Gespräch",
+                "synonyms": [
+                  "RSOIm gespräch"
+                ]
               }
             }
           ]

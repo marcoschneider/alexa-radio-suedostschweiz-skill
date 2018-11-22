@@ -21,13 +21,15 @@ let podcasts = {
     "title": "Podcasts von Radio Südostschweiz.",
     "subtitle": "Alexa podcast streaming skill for Radio Südostschweiz",
     "name": "R S O im Gespräch",
-    "podcastURL": "https://www.suedostschweiz.ch/podcasts/feed/1897039"
+    "podcastURL": "https://www.suedostschweiz.ch/podcasts/feed/1897039",
+    "id": "0"
   },
   "1": {
     "title": "Podcasts von Radio Südostschweiz.",
     "subtitle": "Alexa podcast streaming skill for Radio Südostschweiz",
     "name": "100 Sekunden",
-    "podcastURL": "https://www.suedostschweiz.ch/podcasts/feed/1897039"
+    "podcastURL": "https://www.suedostschweiz.ch/podcasts/feed/1897039",
+    "id": "1"
   }
 };
 
@@ -75,29 +77,23 @@ exports.handler = (event, context, callback) => {
   alexa.execute();
 };
 
-var handlers = {
+let handlers = {
   'LaunchRequest': function() {
-    this.emit(':ask', 'Willkommen bei Radio Südostschweiz. Was möchtest du tun?', 'Mit Alexa starte Radio Südostschweiz gelangst du zum Livestream. Um den Podcast zuhören, sage: Alexa starte Podcasts.');
+    this.emit(':ask', 'Willkommen bei Radio Südostschweiz. Was möchtest du tun?', 'Mit Alexa starte Radio Südostschweiz gelangst du zum Livestream. Um den Podcast zu hören, sage: Alexa liste mir alle Podcasts auf.');
   },
   'PlayRadioIntent': function() {
-    this.response.speak('Viel Spass.').audioPlayerPlay('REPLACE_ALL', radioStreamInfo.url, radioStreamInfo.url, null, 0);
+    response.speak('Viel Spass.').audioPlayerPlay('REPLACE_ALL', radioStreamInfo.url, radioStreamInfo.url, null, 0);
     this.emit(':responseReady');
   },
   'PlayPodcastIntent':function() {
     let count = Object.keys(podcasts).length;
     let that = this;
     if (count > 1) {
-      /*let speechoutput = 'Hier die Liste der Podcasts. ';
-      for (let i = 0; i < count; i++) {
-        speechoutput += podcasts[""+ i +""].name + '. ';
-      }
-      console.log(speechoutput);
-      this.response.speak(speechoutput + 'Welchen Podcast möchtest du höhren?').listen('Sorry, ich habe dich nicht verstanden');
-      this.emit(':responseReady');*/
-      getPodcastEpisodes("0", function (err, podcast_episode_urls) {
+      let podcast_index = this.attributes.podcast_index;
+      getPodcastEpisodes(podcast_index, function (err, podcast_episode_urls) {
         if (err == null) {
+          that.response.speak('Ich starte nun den Podcast ' + podcasts[podcast_index].name).audioPlayerPlay('REPLACE_ALL', podcast_episode_urls[0], podcast_episode_urls[0], null, 0);
           that.attributes.podcasts = {'currentPodcastEpisode': 0};
-          that.response.speak('Viel Spass mit dem Podcast von Radio Südostschweiz.').audioPlayerPlay('REPLACE_ALL', podcast_episode_urls[0], podcast_episode_urls[0], null, 0);
           that.emit(':responseReady');
         } else {
           that.response.speak('Es ist ein Fehler mit dem aufrufen des Podcasts aufgetreten.');
@@ -119,8 +115,25 @@ var handlers = {
     }
   },
   'SearchPodcastIntent': function(){
-    this.response.speak('');
-    this.emit(':responseReady');
+    let count = Object.keys(podcasts).length;
+    let speechoutput = 'Hier die Liste der Podcasts: ';
+    for (let i = 0; i < count; i++) {
+      speechoutput += podcasts[""+ i +""].name + '. ';
+    }
+    this.response.listen(speechoutput + 'Welchen Podcast möchtest du höhren?');
+    console.log(util.inspect(this.sessionAttributes, false, null, true));
+    let slot_resolutions = this.event.request.intent.slots.podcast_name.resolutions;
+    if (slot_resolutions !== undefined) {
+      let slot_value_id = slot_resolutions.resolutionsPerAuthority[0].values[0].value.id;
+      if (slot_value_id !== undefined) {
+        this.attributes.podcast_index = slot_value_id;
+        this.emit("PlayPodcastIntent");
+      }else{
+        this.response.speak("Ich habe diesen Podcast leider nicht gefunden");
+      }
+      this.emit(":responseReady");
+    }
+    this.emit(":responseReady");
   },
   'AMAZON.HelpIntent': function() {
     // skill help logic goes here
