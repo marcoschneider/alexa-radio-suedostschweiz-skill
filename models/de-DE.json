@@ -21,9 +21,12 @@
           "name": "PlayPodcastIntent",
           "slots": [],
           "samples": [
+            "starte Podcasts von Radio Südostschweiz",
+            "frage Radio Südostschweiz einen Podcast zu spielen",
             "spiele den Podcast von Radio Südostschweiz",
             "starte Podcasts",
-            "spiele den Podcast von Südostschweiz"
+            "spiele den Podcast von Südostschweiz",
+            "spiele Podcasts"
           ]
         },
         {
@@ -33,6 +36,9 @@
               "name": "podcast_name",
               "type": "podcastType",
               "samples": [
+                "starte {podcast_name}",
+                "spiele {podcast_name}",
+                "ich möchte den Podcast {podcast_name} höhren",
                 "{podcast_name}"
               ]
             }

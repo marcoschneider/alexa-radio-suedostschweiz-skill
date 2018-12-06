@@ -30,30 +30,15 @@ let podcasts = {
     "name": "100 Sekunden",
     "podcastURL": "https://www.suedostschweiz.ch/podcasts/feed/1897039",
     "id": "1"
+  },
+  "2": {
+    "title": "Podcasts von Radio Südostschweiz.",
+    "subtitle": "Alexa podcast streaming skill for Radio Südostschweiz",
+    "name": "Hast du gesehen.",
+    "podcastURL": "https://www.suedostschweiz.ch/podcasts/feed/1897039",
+    "id": "2"
   }
 };
-
-function delegateSlotCollection() {
-  let updatedIntent = this.event.request.intent;
-  console.log("Dialog State: " + util.inspect(this.event.request.dialogState, false, null, true));
-  if (this.event.request.dialogState === "STARTED") {
-    this.emit(':delegate', updatedIntent);
-  } else if (this.event.request.dialogState === "IN_PROGRESS") {
-    if(this.event.request.intent.slots.podcast_name.value) {
-      console.log("Request Intent" + util.inspect(this.event.request.intent, false ,null, true));
-
-      console.log("This Response" + util.inspect(this.response, false, null, true));
-      this.emit(':elicitSlot', 'podcast_name', buildSpeech(), "Kannst du das wiederholen, ich habe dich nicht ganz verstanden");
-    } else {
-      this.emit(':delegate', updatedIntent);
-    }
-  } else if (this.event.request.dialogState === 'COMPLETED'){
-    // we have collected all of our slots!
-    // time to return them
-    return updatedIntent
-  }
-  return null;
-}
 
 function getPodcastEpisodes(index, callback) {
   let podcast_episode_url;
@@ -88,9 +73,10 @@ function getPodcastEpisodes(index, callback) {
   });
 }
 
-function buildSpeech() {
+function buildPodcastListSpeech() {
   let count = Object.keys(podcasts).length;
   let speechoutput = 'Hier die Liste der Podcasts: ';
+
   for (let i = 0; i < count; i++) {
     speechoutput += podcasts[""+ i +""].name + '. ';
   }
@@ -111,72 +97,62 @@ exports.handler = (event, context, callback) => {
 
 let handlers = {
   'LaunchRequest': function() {
-    this.emit(':ask', 'Willkommen bei Radio Südostschweiz. Was möchtest du tun?', 'Mit Alexa starte Radio Südostschweiz gelangst du zum Livestream. Um den Podcast zu hören, sage: Alexa liste mir alle Podcasts auf.');
+    this.emit(':ask', 'Willkommen bei Radio Südostschweiz. Mit Alexa starte Radio gelangst du zum Livestream. ' +
+        'Um die Podcasts zu hören, sag: "Alexa liste mir alle Podcasts auf". ' +
+        'Was möchtest du tun?',
+        'Mit Alexa starte Radio gelangst du zum Live Radio.');
   },
   'PlayRadioIntent': function() {
-    this.response.speak('Viel Spass.').audioPlayerPlay('REPLACE_ALL', radioStreamInfo.url, radioStreamInfo.url, null, 0);
+    this.response.speak('Viel Spass mit dem Radio von Radio Südostschweiz.').audioPlayerPlay('REPLACE_ALL', radioStreamInfo.url, radioStreamInfo.url, null, 0);
     this.emit(':responseReady');
   },
   'PlayPodcastIntent':function() {
-    let count = Object.keys(podcasts).length;
     let that = this;
-    if (count > 1) {
-      console.log(util.inspect(this.attributes.podcast_index, false, null, true));
-      let podcast_index = "0";
-      if (this.attributes.podcast_index !== undefined) {
-        podcast_index = this.attributes.podcast_index;
+    let podcast = podcasts[0];
+    console.log("Session Attributes: " + util.inspect(this.sessionAttributes, false, null, true));
+    getPodcastEpisodes("0", function (err, podcast_episode_urls) {
+      if (err === null ) {
+        that.response.speak('Ich starte nun den standard Podcast ' + podcast.name).audioPlayerPlay('REPLACE_ALL', podcast_episode_urls[0], podcast_episode_urls[0], null, 0);
+        that.emit(':responseReady');
+      } else {
+        that.response.speak('Es ist ein Fehler mit dem aufrufen des Podcasts aufgetreten.');
+        that.emit(':responseReady');
+        console.log("Error: " + err);
       }
-      getPodcastEpisodes(podcast_index, function (err, podcast_episode_urls) {
-        if (err == null) {
-          let podcast = podcasts[podcast_index];
-          console.log("Podcast Index" + podcast_index);
-          that.response.speak('Ich starte nun den Podcast ' + podcast.name).audioPlayerPlay('REPLACE_ALL', podcast_episode_urls[0], podcast_episode_urls[0], null, 0);
-          that.attributes.podcasts = {
-            'currentPodcastEpisode': 0,
-            'currentPodcastName': podcasts.name,
-            'currentPodcastId': podcast_index
-          };
-          that.emit(':responseReady');
-        } else {
-          that.response.speak('Es ist ein Fehler mit dem aufrufen des Podcasts aufgetreten.');
-          that.emit(':responseReady');
-          console.log("Error: " + err);
-        }
-      });
-    } else {
-      getPodcastEpisodes("0", function (err, podcast_episode_urls) {
-        if (err === null ) {
-          that.response.speak('Ich starte nun den Podcast ' + podcasts[0].name).audioPlayerPlay('REPLACE_ALL', podcast_episode_urls[0], podcast_episode_urls[0], null, 0);
-          that.emit(':responseReady');
-        } else {
-          that.response.speak('Es ist ein Fehler mit dem aufrufen des Podcasts aufgetreten.');
-          that.emit(':responseReady');
-          console.log("Error: " + err);
-        }
-      });
-    }
+    });
   },
   'PlayPodcastWithNameIntent': function(){
 
     let slot_resolutions = this.event.request.intent.slots.podcast_name.resolutions;
-
+    console.log("Slot: " + util.inspect(slot_resolutions, false, null, true));
     if (slot_resolutions !== undefined) {
-      console.log("Attributes: " + util.inspect(slot_resolutions, false, null, true));
       let slot_value_id = slot_resolutions.resolutionsPerAuthority[0].values[0].value.id;
       if (slot_value_id !== undefined) {
-        this.attributes.podcast_index = slot_value_id;
-        this.emit('PlayPodcastIntent');
+        let that = this;
+        console.log("Session Attributes: " + util.inspect(this.session, false, null, true));
+        getPodcastEpisodes(slot_value_id, function (err, podcast_episode_urls) {
+          if (err == null) {
+            let podcast = podcasts[slot_value_id];
+            console.log("Podcast Index" + slot_value_id);
+            that.response.speak('Ich starte nun den Podcast ' + podcast.name).audioPlayerPlay('REPLACE_ALL', podcast_episode_urls[0], podcast_episode_urls[0], null, 0);
+            that.emit(':responseReady');
+          } else {
+            that.response.speak('Es ist ein Fehler mit dem aufrufen des Podcasts aufgetreten.');
+            that.emit(':responseReady');
+            console.log("Error: " + err);
+          }
+        });
       }else{
-        this.response.speak("Ich habe diesen Podcast leider nicht gefunden");
+        this.response.speak("Ich konnte aus dem Podcast keine ID lesen, deshalb habe ich ihn nicht gefunden.");
         this.emit(":responseReady");
       }
     }else{
-      this.response.speak("Es tut mir leid, ich konnte diesen Podcast nicht finden");
+      this.response.speak("Es tut mir leid, ich habe dich anscheinend nicht ganz verstanden. Beim nächsten Versuch klappt es.");
       this.emit(":responseReady");
     }
   },
   'ListAllPodcastsIntent': function(){
-    this.emit(':tell', buildSpeech());
+    this.emit(':tell', buildPodcastListSpeech());
   },
   'AMAZON.HelpIntent': function() {
     // skill help logic goes here
@@ -195,7 +171,7 @@ let handlers = {
     this.emit(':responseReady');
   },
   'AMAZON.NextIntent': function() {
-    console.log("Attributes: " + util.inspect(this.attributes, false, null, true));
+    console.log("Attributes: " + util.inspect(this.session, false, null, true));
     this.response.speak('Hier die nächste Podcast episode.');
     this.emit(':responseReady');
   },
@@ -204,17 +180,19 @@ let handlers = {
     this.emit(':responseReady');
   },
   'AMAZON.PauseIntent': function() {
-    this.emit('AMAZON.StopIntent');
+    this.response.speak('Alles klar. Ich stoppe den Audio Player').audioPlayerStop();
+    this.emit(':responseReady');
   },
   'AMAZON.CancelIntent': function() {
     this.emit('AMAZON.StopIntent');
   },
   'AMAZON.StopIntent': function() {
-    this.response.speak('Okay. Ich habe alles abgebrochen').audioPlayerStop();
+    this.response.speak('Okay. Ich habe alles abgebrochen'));
     this.emit(':responseReady');
   },
   'AMAZON.ResumeIntent': function() {
-    this.emit('PlayStream');
+    console.log(this.response);
+    this.emit(':responseReady');
   },
   'AMAZON.LoopOnIntent': function() {
     this.emit('AMAZON.StartOverIntent');
