@@ -19,35 +19,31 @@
         },
         {
           "name": "PlayPodcastIntent",
-          "slots": [
-            {
-              "name": "podcast_name",
-              "type": "Podcastname"
-            }
-          ],
+          "slots": [],
           "samples": [
             "spiele den Podcast von Radio Südostschweiz",
-            "starte den Podcast {podcast_name}",
             "starte Podcasts",
             "spiele den Podcast von Südostschweiz"
           ]
         },
         {
-          "name": "SearchPodcastIntent",
+          "name": "PlayPodcastWithNameIntent",
           "slots": [
             {
               "name": "podcast_name",
-              "type": "Podcastname"
+              "type": "podcastType",
+              "samples": [
+                "{podcast_name}"
+              ]
             }
           ],
           "samples": [
-            "liste mir alle Podcasts auf",
-            "welche podcasts gibt es",
-            "liste von Podcasts",
+            "spiele den Podcast {podcast_name} von Radio Südostschweiz",
+            "starte den Podcast {podcast_name}",
+            "spiele den Podcast {podcast_name}",
             "starte {podcast_name}",
             "spiele {podcast_name}",
-            "starte den Podcast {podcast_name} von Radio Südostschweiz",
-            "{podcast_name}"
+            "starte den Podcast {podcast_name} von Radio Südostschweiz"
           ]
         },
         {
@@ -81,11 +77,29 @@
         {
           "name": "AMAZON.NavigateHomeIntent",
           "samples": []
+        },
+        {
+          "name": "ListAllPodcastsIntent",
+          "slots": [],
+          "samples": [
+            "liste von Podcasts",
+            "frage Radio Südostschweiz mir alle Podcasts aufzulisten",
+            "welche Podcasts gibt es",
+            "liste mir alle Podcasts auf"
+          ]
+        },
+        {
+          "name": "AMAZON.NextIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.PreviousIntent",
+          "samples": []
         }
       ],
       "types": [
         {
-          "name": "Podcastname",
+          "name": "podcastType",
           "values": [
             {
               "id": "1",
@@ -105,6 +119,37 @@
           ]
         }
       ]
-    }
+    },
+    "dialog": {
+      "intents": [
+        {
+          "name": "PlayPodcastWithNameIntent",
+          "confirmationRequired": false,
+          "prompts": {},
+          "slots": [
+            {
+              "name": "podcast_name",
+              "type": "podcastType",
+              "confirmationRequired": false,
+              "elicitationRequired": true,
+              "prompts": {
+                "elicitation": "Elicit.Slot.440001648188.653590346939"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "prompts": [
+      {
+        "id": "Elicit.Slot.440001648188.653590346939",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Welchen Podcast möchtest du höhren?"
+          }
+        ]
+      }
+    ]
   }
 }
