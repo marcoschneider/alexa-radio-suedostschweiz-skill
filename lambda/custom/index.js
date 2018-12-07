@@ -3,8 +3,11 @@
 const Alexa = require('alexa-sdk');
 const parseString = require('xml2js').parseString;
 const https = require('https');
+
+// For development.
 const util = require('util');
 
+// Radio Stream information.
 let radioStreamInfo = {
   title: 'Radio Südostschweiz Livestream',
   subtitle: 'Alexa audio streaming skill for Radio Südostschweiz.',
@@ -16,16 +19,17 @@ let radioStreamInfo = {
   }
 };
 
+// Podcast object. Needs to be updated when new Podcast is launched.
 let podcasts = {
   "0": {
-    "title": "Podcasts von Radio Südostschweiz.",
+    "title": "Podcast von Radio Südostschweiz.",
     "subtitle": "Alexa podcast streaming skill for Radio Südostschweiz",
     "name": "R S O im Gespräch",
     "podcastURL": "https://www.suedostschweiz.ch/podcasts/feed/1897039",
     "id": "0"
   },
   "1": {
-    "title": "Podcasts von Radio Südostschweiz.",
+    "title": "Podcast von Radio Südostschweiz.",
     "subtitle": "Alexa podcast streaming skill for Radio Südostschweiz",
     "name": "100 Sekunden",
     "podcastURL": "https://www.suedostschweiz.ch/podcasts/feed/1897039",
@@ -33,6 +37,7 @@ let podcasts = {
   }
 };
 
+// Mocking database but just at runtime.
 let currently_playing = {
   "podcast_episode": 0,
   "intent": "PlayPodcastIntent",
@@ -101,6 +106,8 @@ let handlers = {
         'Mit Alexa starte Radio gelangst du zum Live Radio.');
   },
   'PlayRadioIntent': function() {
+
+    // Start radio livestream immediately.
     this.response.speak('Viel Spass mit dem Radio von Radio Südostschweiz.').audioPlayerPlay('REPLACE_ALL', radioStreamInfo.url, radioStreamInfo.url, null, 0);
     this.emit(':responseReady');
   },
@@ -108,22 +115,31 @@ let handlers = {
     let that = this;
     getPodcastEpisodes("0", function (err, podcast_episode_urls) {
       if (err === null ) {
+
+        // Re-assign variables for better readability.
         let podcast = podcasts[0];
         let podcast_episode = podcast_episode_urls[currently_playing.podcast_episode];
 
+        // Speaking the current podcast name and episode number.
         that.response.speak('Hier der standard Podcast ' + podcast.name + ' Episode' + currently_playing.podcast_episode).audioPlayerPlay('REPLACE_ALL', podcast_episode, podcast.machine_name+'_'+podcast.id, null, 0);
         console.log("Current PlayPodcastIntent: " + currently_playing.podcast_episode);
         that.emit(':responseReady');
+
       } else {
+
         that.response.speak('Es ist ein Fehler mit dem aufrufen des Podcasts aufgetreten.');
         that.emit(':responseReady');
         console.log("Error: " + err);
+
       }
     });
 
   },
   'PlayPodcastWithNameIntent': function(){
+    // setting this to that so i can use this in callback function.
     let that = this;
+
+    // Checking if slot id in runtime object is already set.
     if (currently_playing.slot_id === "") {
       let slot_resolutions = this.event.request.intent.slots.podcast_name.resolutions;
       if (slot_resolutions !== undefined) {
@@ -131,17 +147,24 @@ let handlers = {
         if (slot_value_id !== undefined) {
           getPodcastEpisodes(slot_value_id, function (err, podcast_episode_urls) {
             if (err == null) {
+
+              // Re-assign variables for better readability.
               let podcast = podcasts[slot_value_id];
               let podcast_episode = podcast_episode_urls[currently_playing.podcast_episode];
+
+              // Saving the current intent and slot id at runtime.
               currently_playing.intent = that.event.request.intent.name;
               currently_playing.slot_id = slot_value_id;
+
+              // Speaking the current podcast name and episode number.
               that.response.speak('Hier der Podcast ' + podcast.name + ' Episode' + currently_playing.podcast_episode).audioPlayerPlay('REPLACE_ALL', podcast_episode, podcast_episode, null, 0);
-              console.log("Current: " + util.inspect(currently_playing, {showHidden: false, depth: null}));
               that.emit(':responseReady');
             } else {
+
               that.response.speak('Es ist ein Fehler mit dem aufrufen des Podcasts aufgetreten.');
               that.emit(':responseReady');
               console.log("Error: " + err);
+
             }
           });
         }else{
@@ -153,20 +176,29 @@ let handlers = {
         this.emit(":responseReady");
       }
     }else{
+
+      // Assign current podcast id to variable
       let slot_value_id = currently_playing.slot_id;
       getPodcastEpisodes(slot_value_id, function (err, podcast_episode_urls) {
         if (err == null) {
+
+          // Re-assign variables for better readability.
           let podcast = podcasts[slot_value_id];
           let podcast_episode = podcast_episode_urls[currently_playing.podcast_episode];
+
+          // Saving the current intent and slot id at runtime.
           currently_playing.intent = that.event.request.intent.name;
           currently_playing.slot_id = slot_value_id;
+
+          // Speaking the current podcast name and episode number.
           that.response.speak('Hier der Podcast ' + podcast.name + ' Episode' + currently_playing.podcast_episode).audioPlayerPlay('REPLACE_ALL', podcast_episode, podcast_episode, null, 0);
-          console.log("Current: " + util.inspect(currently_playing, {showHidden: false, depth: null}));
           that.emit(':responseReady');
         } else {
+
           that.response.speak('Es ist ein Fehler mit dem aufrufen des Podcasts aufgetreten.');
           that.emit(':responseReady');
           console.log("Error: " + err);
+
         }
       });
     }
@@ -192,12 +224,13 @@ let handlers = {
     this.emit(':responseReady');
   },
   'AMAZON.NextIntent': function() {
-    console.log(util.inspect(currently_playing, {showHidden: false, depth: null}));
-    console.log("Current NextIntent before: " + currently_playing.podcast_episode);
+
     if (currently_playing.podcast_episode === 0) {
       this.response.speak("Dies ist die aktuellste Podcast Episode.");
       this.emit(':responseReady');
     }else{
+
+      // When request comes from PlayPodcastIntent it's redirecting to that intent when action has been taken.
       if (currently_playing.intent === 'PlayPodcastIntent') {
         currently_playing.podcast_episode = currently_playing.podcast_episode-1;
         this.emit('PlayPodcastIntent');
@@ -208,9 +241,8 @@ let handlers = {
     }
   },
   'AMAZON.PreviousIntent': function() {
-    console.log(util.inspect(currently_playing, {showHidden: false, depth: null}));
-    console.log("Current NextIntent before: " + currently_playing.podcast_episode);
 
+    // When request comes from PlayPodcastIntent it's redirecting to that intent when action has been taken.
     if (currently_playing.intent === 'PlayPodcastIntent') {
       currently_playing.podcast_episode = currently_playing.podcast_episode+1;
       this.emit('PlayPodcastIntent');
@@ -220,6 +252,8 @@ let handlers = {
     }
   },
   'AMAZON.PauseIntent': function() {
+
+    // Stops the livestream or podcast audio.
     this.response.speak('Alles klar. Ich stoppe den Audio Player').audioPlayerStop();
     this.emit(':responseReady');
   },
@@ -227,10 +261,14 @@ let handlers = {
     this.emit('AMAZON.StopIntent');
   },
   'AMAZON.StopIntent': function() {
+
+    // Leaves the skill when called.
     this.response.speak('Okay. Ich habe alles gestoppt').audioPlayerStop();
     this.emit(':responseReady');
   },
   'AMAZON.ResumeIntent': function() {
+
+    // Plays back livestream or podcast where it has been paused.
     if (this.event.context.AudioPlayer.offsetInMilliseconds > 0 &&
         this.event.context.AudioPlayer.playerActivity === 'STOPPED') {
 
@@ -242,22 +280,6 @@ let handlers = {
     }else {
       this.response.speak("Pausiere zuerst, um weiterzuhöhren.");
     }
-    this.emit(':responseReady');
-  },
-  'AMAZON.LoopOnIntent': function() {
-    this.emit('AMAZON.StartOverIntent');
-  },
-  'AMAZON.LoopOffIntent': function() {
-    this.emit('AMAZON.StartOverIntent');
-  },
-  'AMAZON.ShuffleOnIntent': function() {
-    this.emit('AMAZON.StartOverIntent');
-  },
-  'AMAZON.ShuffleOffIntent': function() {
-    this.emit('AMAZON.StartOverIntent');
-  },
-  'AMAZON.StartOverIntent': function() {
-    this.response.speak('Sorry. Das kann ich momentan nicht machen.');
     this.emit(':responseReady');
   },
   'PlayCommandIssued': function() {
