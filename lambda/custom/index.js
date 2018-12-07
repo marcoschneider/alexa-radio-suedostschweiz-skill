@@ -21,7 +21,6 @@ let podcasts = {
     "title": "Podcasts von Radio Südostschweiz.",
     "subtitle": "Alexa podcast streaming skill for Radio Südostschweiz",
     "name": "R S O im Gespräch",
-    "machine_name": "rso_im_gespraech",
     "podcastURL": "https://www.suedostschweiz.ch/podcasts/feed/1897039",
     "id": "0"
   },
@@ -29,7 +28,6 @@ let podcasts = {
     "title": "Podcasts von Radio Südostschweiz.",
     "subtitle": "Alexa podcast streaming skill for Radio Südostschweiz",
     "name": "100 Sekunden",
-    "machine_name": "100_sekunden",
     "podcastURL": "https://www.suedostschweiz.ch/podcasts/feed/1897039",
     "id": "1"
   }
@@ -137,7 +135,7 @@ let handlers = {
               let podcast_episode = podcast_episode_urls[currently_playing.podcast_episode];
               currently_playing.intent = that.event.request.intent.name;
               currently_playing.slot_id = slot_value_id;
-              that.response.speak('Hier der Podcast ' + podcast.name + ' Episode' + currently_playing.podcast_episode).audioPlayerPlay('REPLACE_ALL', podcast_episode, podcast.machine_name+'_'+podcast.id, null, 0);
+              that.response.speak('Hier der Podcast ' + podcast.name + ' Episode' + currently_playing.podcast_episode).audioPlayerPlay('REPLACE_ALL', podcast_episode, podcast_episode, null, 0);
               console.log("Current: " + util.inspect(currently_playing, {showHidden: false, depth: null}));
               that.emit(':responseReady');
             } else {
@@ -162,7 +160,7 @@ let handlers = {
           let podcast_episode = podcast_episode_urls[currently_playing.podcast_episode];
           currently_playing.intent = that.event.request.intent.name;
           currently_playing.slot_id = slot_value_id;
-          that.response.speak('Hier der Podcast ' + podcast.name + ' Episode' + currently_playing.podcast_episode).audioPlayerPlay('REPLACE_ALL', podcast_episode, podcast.machine_name+'_'+podcast.id, null, 0);
+          that.response.speak('Hier der Podcast ' + podcast.name + ' Episode' + currently_playing.podcast_episode).audioPlayerPlay('REPLACE_ALL', podcast_episode, podcast_episode, null, 0);
           console.log("Current: " + util.inspect(currently_playing, {showHidden: false, depth: null}));
           that.emit(':responseReady');
         } else {
@@ -229,11 +227,21 @@ let handlers = {
     this.emit('AMAZON.StopIntent');
   },
   'AMAZON.StopIntent': function() {
-    this.response.speak('Okay. Ich habe alles gestoppt');
+    this.response.speak('Okay. Ich habe alles gestoppt').audioPlayerStop();
     this.emit(':responseReady');
   },
   'AMAZON.ResumeIntent': function() {
-    this.response.speak("Woher bekomme ich diese Daten");
+    if (this.event.context.AudioPlayer.offsetInMilliseconds > 0 &&
+        this.event.context.AudioPlayer.playerActivity === 'STOPPED') {
+
+      this.response.speak("Fahre fort.").audioPlayerPlay('REPLACE_ALL',
+          this.event.context.AudioPlayer.token,
+          this.event.context.AudioPlayer.token,
+          null,
+          this.event.context.AudioPlayer.offsetInMilliseconds);
+    }else {
+      this.response.speak("Pausiere zuerst, um weiterzuhöhren.");
+    }
     this.emit(':responseReady');
   },
   'AMAZON.LoopOnIntent': function() {
