@@ -4,9 +4,6 @@ const Alexa = require('alexa-sdk');
 const parseString = require('xml2js').parseString;
 const https = require('https');
 
-// For development.
-const util = require('util');
-
 // Radio Stream information.
 let radioStreamInfo = {
   title: 'Radio Südostschweiz Livestream',
@@ -27,13 +24,6 @@ let podcasts = {
     "name": "R S O im Gespräch",
     "podcastURL": "https://www.suedostschweiz.ch/podcasts/feed/1897039",
     "id": "0"
-  },
-  "1": {
-    "title": "Podcast von Radio Südostschweiz.",
-    "subtitle": "Alexa podcast streaming skill for Radio Südostschweiz",
-    "name": "100 Sekunden",
-    "podcastURL": "https://www.suedostschweiz.ch/podcasts/feed/1897039",
-    "id": "1"
   }
 };
 
