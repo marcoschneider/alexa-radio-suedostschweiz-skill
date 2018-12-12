@@ -39,9 +39,11 @@ let podcasts = {
 
 // Mocking database but just at runtime.
 let currently_playing = {
-  "podcast_episode": 0,
+  "podcast_episode": null,
   "intent": "PlayPodcastIntent",
-  "slot_id": ""
+  "slot_id": "",
+  "podcast_url": "",
+  "max_number_of_podcasts": null
 };
 
 function getPodcastEpisodes(index, callback) {
@@ -60,10 +62,16 @@ function getPodcastEpisodes(index, callback) {
       parseString(data, function (err, result) {
         if (!err) {
           let podcast_episode_urls = [];
-          for (let i = 0; i < result.rss.channel[0]["item"].length; i++ ) {
+          let number_of_episodes = result.rss.channel[0]["item"].length;
+          for (let i = 0; i < number_of_episodes; i++ ) {
             podcast_episode_url = result.rss.channel[0]["item"][i]["enclosure"][0]["$"]["url"];
             podcast_episode_urls.push(podcast_episode_url);
           }
+          podcast_episode_urls.reverse();
+          if (currently_playing.podcast_episode === null) {
+            currently_playing.podcast_episode = number_of_episodes-1;
+          }
+          currently_playing.max_number_of_podcasts = number_of_episodes-1;
           callback(null, podcast_episode_urls);
         } else {
           callback(err, null);
@@ -153,6 +161,7 @@ let handlers = {
               let podcast_episode = podcast_episode_urls[currently_playing.podcast_episode];
 
               // Saving the current intent and slot id at runtime.
+              currently_playing.podcast_url = podcast_episode;
               currently_playing.intent = that.event.request.intent.name;
               currently_playing.slot_id = slot_value_id;
 
@@ -164,7 +173,6 @@ let handlers = {
               that.response.speak('Es ist ein Fehler mit dem aufrufen des Podcasts aufgetreten.');
               that.emit(':responseReady');
               console.log("Error: " + err);
-
             }
           });
         }else{
@@ -225,17 +233,17 @@ let handlers = {
   },
   'AMAZON.NextIntent': function() {
 
-    if (currently_playing.podcast_episode === 0) {
+    if (currently_playing.podcast_episode === currently_playing.max_number_of_podcasts) {
       this.response.speak("Dies ist die aktuellste Podcast Episode.");
       this.emit(':responseReady');
     }else{
 
       // When request comes from PlayPodcastIntent it's redirecting to that intent when action has been taken.
       if (currently_playing.intent === 'PlayPodcastIntent') {
-        currently_playing.podcast_episode = currently_playing.podcast_episode-1;
+        currently_playing.podcast_episode = currently_playing.podcast_episode+1;
         this.emit('PlayPodcastIntent');
       } else {
-        currently_playing.podcast_episode = currently_playing.podcast_episode-1;
+        currently_playing.podcast_episode = currently_playing.podcast_episode+1;
         this.emit('PlayPodcastWithNameIntent');
       }
     }
@@ -244,10 +252,10 @@ let handlers = {
 
     // When request comes from PlayPodcastIntent it's redirecting to that intent when action has been taken.
     if (currently_playing.intent === 'PlayPodcastIntent') {
-      currently_playing.podcast_episode = currently_playing.podcast_episode+1;
+      currently_playing.podcast_episode = currently_playing.podcast_episode-1;
       this.emit('PlayPodcastIntent');
     } else {
-      currently_playing.podcast_episode = currently_playing.podcast_episode+1;
+      currently_playing.podcast_episode = currently_playing.podcast_episode-1;
       this.emit('PlayPodcastWithNameIntent');
     }
   },
