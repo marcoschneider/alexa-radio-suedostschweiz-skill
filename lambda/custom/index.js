@@ -109,7 +109,7 @@ exports.handler = (event, context, callback) => {
 let handlers = {
   'LaunchRequest': function() {
     this.emit(':ask', 'Willkommen bei Radio Südostschweiz. Mit Alexa starte Radio gelangst du zum Livestream. ' +
-        'Um die Podcasts zu hören, sag: "Alexa liste mir alle Podcasts auf". ' +
+        'Um die Podcasts zu hören, sag: "liste mir alle Podcasts auf". ' +
         'Was möchtest du tun?',
         'Mit Alexa starte Radio gelangst du zum Live Radio.');
   },
@@ -215,8 +215,8 @@ let handlers = {
     this.emit(':tell', buildPodcastListSpeech());
   },
   'AMAZON.HelpIntent': function() {
-    // skill help logic goes here
-    this.emit(':responseReady');
+    this.emit(':ask', 'Ich helfe gerne. Du kannst mit, "starte Radio" den Livestream von Radio Südostschweiz höhren. Mit, "starte Podcasts von Radio Südostschweiz" wird der Standard Podcast abgespielt. ' +
+      'Falls du einen spezifischen Podcast höhren möchtest, sage, "spiele den Podcast, danach den Podcast Namen und zum schluss noch, von Radio Südostschweiz." Um die Liste der Podcasts abzurufen sage, "liste mir alle Podcasts auf.". Was möchtest du nun machen?');
   },
   'SessionEndedRequest': function() {
     console.log("\n---------- ERROR ----------");
