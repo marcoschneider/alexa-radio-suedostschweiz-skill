@@ -32,7 +32,7 @@ let podcasts = {
     "title": "Podcast von Radio Südostschweiz.",
     "subtitle": "Alexa podcast streaming skill for Radio Südostschweiz",
     "name": "100 Sekunden",
-    "podcastURL": "https://www.suedostschweiz.ch/podcasts/feed/1897039",
+    "podcastURL": "https://www.suedostschweiz.ch/podcasts/feed/2393476",
     "id": "1"
   }
 };
@@ -44,6 +44,14 @@ let currently_playing = {
   "slot_id": "",
   "podcast_url": "",
   "max_number_of_podcasts": null
+};
+
+let messages = {
+  episodes_not_found: 'Die Episoden konnten von südostschweiz.ch nicht geladen werden. ' +
+                      'Informiere den Entwickler über diesen Fehler. ' +
+                      'Hier die E-Mailadresse: marco.schneider@somedia.ch',
+  podcast_id_not_found: 'Ich konnte aus dem Podcast keine ID lesen, deshalb habe ich ihn nicht gefunden.',
+  did_not_understand: 'Es tut mir leid, ich habe dich anscheinend nicht ganz verstanden. Beim nächsten Versuch klappt es.'
 };
 
 function getPodcastEpisodes(index, callback) {
@@ -89,7 +97,11 @@ function buildPodcastListSpeech() {
   let speechoutput = 'Hier die Liste der Podcasts: ';
 
   for (let i = 0; i < count; i++) {
-    speechoutput += podcasts[""+ i +""].name + ', ';
+    if (i === count) {
+      speechoutput += podcasts[""+ i +""].name + '.';
+    }else{
+      speechoutput += podcasts[""+ i +""].name + ', ';
+    }
   }
 
   return speechoutput;
@@ -116,7 +128,7 @@ let handlers = {
   'PlayRadioIntent': function() {
 
     // Start radio livestream immediately.
-    this.response.speak('Viel Spass mit dem Radio von Radio Südostschweiz.').audioPlayerPlay('REPLACE_ALL', radioStreamInfo.url, radioStreamInfo.url, null, 0);
+    this.response.speak('Viel Spass mit dem Radio von Südostschweiz.').audioPlayerPlay('REPLACE_ALL', radioStreamInfo.url, radioStreamInfo.url, null, 0);
     this.emit(':responseReady');
   },
   'PlayPodcastIntent':function() {
@@ -132,13 +144,10 @@ let handlers = {
         that.response.speak('Hier der standard Podcast ' + podcast.name + ' Episode' + currently_playing.podcast_episode).audioPlayerPlay('REPLACE_ALL', podcast_episode, podcast.machine_name+'_'+podcast.id, null, 0);
         console.log("Current PlayPodcastIntent: " + currently_playing.podcast_episode);
         that.emit(':responseReady');
-
       } else {
-
-        that.response.speak('Es ist ein Fehler mit dem aufrufen des Podcasts aufgetreten.');
+        that.response.speak(messages.episodes_not_found);
         that.emit(':responseReady');
         console.log("Error: " + err);
-
       }
     });
 
@@ -146,6 +155,8 @@ let handlers = {
   'PlayPodcastWithNameIntent': function(){
     // setting this to that so i can use this in callback function.
     let that = this;
+
+    console.log("Intent Name" + this.event.request.intent.name);
 
     // Checking if slot id in runtime object is already set.
     if (currently_playing.slot_id === "") {
@@ -166,21 +177,21 @@ let handlers = {
               currently_playing.slot_id = slot_value_id;
 
               // Speaking the current podcast name and episode number.
-              that.response.speak('Hier der Podcast ' + podcast.name + ' Episode' + currently_playing.podcast_episode).audioPlayerPlay('REPLACE_ALL', podcast_episode, podcast_episode, null, 0);
+              that.response.speak('Hier der Podcast ' + podcast.name + ' Episode ' + currently_playing.podcast_episode).audioPlayerPlay('REPLACE_ALL', podcast_episode, podcast_episode, null, 0);
               that.emit(':responseReady');
             } else {
 
-              that.response.speak('Es ist ein Fehler mit dem aufrufen des Podcasts aufgetreten.');
+              that.response.speak(messages.episodes_not_found);
               that.emit(':responseReady');
               console.log("Error: " + err);
             }
           });
         }else{
-          this.response.speak("Ich konnte aus dem Podcast keine ID lesen, deshalb habe ich ihn nicht gefunden.");
+          this.response.speak(messages.podcast_id_not_found);
           this.emit(":responseReady");
         }
       }else{
-        this.response.speak("Es tut mir leid, ich habe dich anscheinend nicht ganz verstanden. Beim nächsten Versuch klappt es.");
+        this.response.speak(messages.did_not_understand);
         this.emit(":responseReady");
       }
     }else{
@@ -203,7 +214,7 @@ let handlers = {
           that.emit(':responseReady');
         } else {
 
-          that.response.speak('Es ist ein Fehler mit dem aufrufen des Podcasts aufgetreten.');
+          that.response.speak(messages.episodes_not_found);
           that.emit(':responseReady');
           console.log("Error: " + err);
 
