@@ -37,13 +37,83 @@ let podcasts = {
   }
 };
 
+function PlayPodcastWithNameAfterSkip(that) {
+  // Assign current podcast id to variable
+  let slot_value_id = currently_playing.slot_id;
+  getPodcastEpisodes(slot_value_id, function (err, podcast_episode_urls) {
+    if (err == null) {
+
+      // Re-assign variables for better readability.
+      let podcast = podcasts[slot_value_id];
+      let podcast_episode = podcast_episode_urls[currently_playing.podcast_episode];
+
+      // Saving the current intent and slot id at runtime.
+      currently_playing.intent = that.event.request.intent.name;
+      currently_playing.slot_id = slot_value_id;
+
+      // Speaking the current podcast name and episode number.
+      that.response.speak('Hier der Podcast ' + podcast.name + ' Episode' + currently_playing.podcast_episode).audioPlayerPlay('REPLACE_ALL', podcast_episode, podcast_episode, null, 0);
+      that.emit(':responseReady');
+    }
+    else {
+      that.response.speak(messages.episodes_not_found);
+      that.emit(':responseReady');
+      console.log("Error: " + err);
+    }
+  });
+}
+
+function PlayPodcastWithName(that) {
+  let slot_resolutions = that.event.request.intent.slots.podcast_name.resolutions;
+  console.log("Current: " + util.inspect(currently_playing, {showHidden: false, depth: null}));
+  if (slot_resolutions !== undefined) {
+      if (slot_resolutions.resolutionsPerAuthority[0].values !== undefined) {
+        let slot_value_id = slot_resolutions.resolutionsPerAuthority[0].values[0].value.id;
+        if (currently_playing.slot_id !== slot_value_id) {
+          currently_playing.podcast_episode = null;
+          getPodcastEpisodes(slot_value_id, function (err, podcast_episode_urls) {
+            if (err == null) {
+
+              // Re-assign variables for better readability.
+              let podcast = podcasts[slot_value_id];
+              let podcast_episode = podcast_episode_urls[currently_playing.podcast_episode];
+
+              // Saving the current intent and slot id at runtime.
+              currently_playing.slot_id = slot_value_id;
+              currently_playing.intent = that.event.request.intent.name;
+
+              // Speaking the current podcast name and episode number.
+              that.response.speak('Hier der Podcast ' + podcast.name + ' Episode ' + currently_playing.podcast_episode).audioPlayerPlay('REPLACE_ALL', podcast_episode, podcast_episode, null, 0);
+              that.emit(':responseReady');
+            }
+            else {
+              that.response.speak(messages.episodes_not_found);
+              that.emit(':responseReady');
+              console.log("Error: " + err);
+            }
+            console.log("Current: " + util.inspect(currently_playing, {
+              showHidden: false,
+              depth: null
+            }));
+          });
+        }
+      }else{
+        that.response.speak(messages.podcast_id_not_found);
+        that.emit(":responseReady");
+      }
+  }else{
+    that.response.speak(messages.did_not_understand);
+    that.emit(":responseReady");
+  }
+}
+
 // Mocking database but just at runtime.
 let currently_playing = {
   "podcast_episode": null,
-  "intent": "PlayPodcastIntent",
+  "intent": "",
   "slot_id": "",
-  "podcast_url": "",
-  "max_number_of_podcasts": null
+  "podcast_name": "",
+  "max_number_of_podcasts_episodes": null
 };
 
 let messages = {
@@ -79,7 +149,8 @@ function getPodcastEpisodes(index, callback) {
           if (currently_playing.podcast_episode === null) {
             currently_playing.podcast_episode = number_of_episodes-1;
           }
-          currently_playing.max_number_of_podcasts = number_of_episodes-1;
+          currently_playing.max_number_of_podcasts_episodes = number_of_episodes-1;
+          currently_playing.podcast_name = result.rss.channel[0].title[0];
           callback(null, podcast_episode_urls);
         } else {
           callback(err, null);
@@ -135,14 +206,15 @@ let handlers = {
     let that = this;
     getPodcastEpisodes("0", function (err, podcast_episode_urls) {
       if (err === null ) {
-
         // Re-assign variables for better readability.
         let podcast = podcasts[0];
         let podcast_episode = podcast_episode_urls[currently_playing.podcast_episode];
 
+        currently_playing.intent = that.event.request.intent.name;
+        currently_playing.slot_id = "0";
+
         // Speaking the current podcast name and episode number.
         that.response.speak('Hier der standard Podcast ' + podcast.name + ' Episode' + currently_playing.podcast_episode).audioPlayerPlay('REPLACE_ALL', podcast_episode, podcast.machine_name+'_'+podcast.id, null, 0);
-        console.log("Current PlayPodcastIntent: " + currently_playing.podcast_episode);
         that.emit(':responseReady');
       } else {
         that.response.speak(messages.episodes_not_found);
@@ -150,76 +222,22 @@ let handlers = {
         console.log("Error: " + err);
       }
     });
-
   },
-  'PlayPodcastWithNameIntent': function(){
-    // setting this to that so i can use this in callback function.
-    let that = this;
-
-    console.log("Intent Name" + this.event.request.intent.name);
-
+  'PlayPodcastWithNameIntent': function() {
     // Checking if slot id in runtime object is already set.
-    if (currently_playing.slot_id === "") {
-      let slot_resolutions = this.event.request.intent.slots.podcast_name.resolutions;
-      if (slot_resolutions !== undefined) {
-        let slot_value_id = slot_resolutions.resolutionsPerAuthority[0].values[0].value.id;
-        if (slot_value_id !== undefined) {
-          getPodcastEpisodes(slot_value_id, function (err, podcast_episode_urls) {
-            if (err == null) {
+    console.log("Intetius: " + currently_playing.intent);
+    switch (currently_playing.intent) {
+      case 'AMAZON.NextIntent':
+        PlayPodcastWithNameAfterSkip(this);
+        break;
 
-              // Re-assign variables for better readability.
-              let podcast = podcasts[slot_value_id];
-              let podcast_episode = podcast_episode_urls[currently_playing.podcast_episode];
+      case 'AMAZON.PreviousIntent':
+        PlayPodcastWithNameAfterSkip(this);
+        break;
 
-              // Saving the current intent and slot id at runtime.
-              currently_playing.podcast_url = podcast_episode;
-              currently_playing.intent = that.event.request.intent.name;
-              currently_playing.slot_id = slot_value_id;
-
-              // Speaking the current podcast name and episode number.
-              that.response.speak('Hier der Podcast ' + podcast.name + ' Episode ' + currently_playing.podcast_episode).audioPlayerPlay('REPLACE_ALL', podcast_episode, podcast_episode, null, 0);
-              that.emit(':responseReady');
-            } else {
-
-              that.response.speak(messages.episodes_not_found);
-              that.emit(':responseReady');
-              console.log("Error: " + err);
-            }
-          });
-        }else{
-          this.response.speak(messages.podcast_id_not_found);
-          this.emit(":responseReady");
-        }
-      }else{
-        this.response.speak(messages.did_not_understand);
-        this.emit(":responseReady");
-      }
-    }else{
-
-      // Assign current podcast id to variable
-      let slot_value_id = currently_playing.slot_id;
-      getPodcastEpisodes(slot_value_id, function (err, podcast_episode_urls) {
-        if (err == null) {
-
-          // Re-assign variables for better readability.
-          let podcast = podcasts[slot_value_id];
-          let podcast_episode = podcast_episode_urls[currently_playing.podcast_episode];
-
-          // Saving the current intent and slot id at runtime.
-          currently_playing.intent = that.event.request.intent.name;
-          currently_playing.slot_id = slot_value_id;
-
-          // Speaking the current podcast name and episode number.
-          that.response.speak('Hier der Podcast ' + podcast.name + ' Episode' + currently_playing.podcast_episode).audioPlayerPlay('REPLACE_ALL', podcast_episode, podcast_episode, null, 0);
-          that.emit(':responseReady');
-        } else {
-
-          that.response.speak(messages.episodes_not_found);
-          that.emit(':responseReady');
-          console.log("Error: " + err);
-
-        }
-      });
+      default:
+        PlayPodcastWithName(this);
+        break;
     }
   },
   'ListAllPodcastsIntent': function(){
@@ -243,35 +261,41 @@ let handlers = {
     this.emit(':responseReady');
   },
   'AMAZON.NextIntent': function() {
-
-    if (currently_playing.podcast_episode === currently_playing.max_number_of_podcasts) {
+    if (currently_playing.podcast_episode === currently_playing.max_number_of_podcasts_episodes) {
       this.response.speak("Dies ist die aktuellste Podcast Episode.");
       this.emit(':responseReady');
     }else{
-
+      console.log("Current Intent Next: " + currently_playing.intent);
       // When request comes from PlayPodcastIntent it's redirecting to that intent when action has been taken.
       if (currently_playing.intent === 'PlayPodcastIntent') {
         currently_playing.podcast_episode = currently_playing.podcast_episode+1;
         this.emit('PlayPodcastIntent');
       } else {
         currently_playing.podcast_episode = currently_playing.podcast_episode+1;
+        currently_playing.intent = this.event.request.intent.name;
         this.emit('PlayPodcastWithNameIntent');
       }
     }
   },
   'AMAZON.PreviousIntent': function() {
-
-    // When request comes from PlayPodcastIntent it's redirecting to that intent when action has been taken.
-    if (currently_playing.intent === 'PlayPodcastIntent') {
-      currently_playing.podcast_episode = currently_playing.podcast_episode-1;
-      this.emit('PlayPodcastIntent');
-    } else {
-      currently_playing.podcast_episode = currently_playing.podcast_episode-1;
-      this.emit('PlayPodcastWithNameIntent');
+    if (currently_playing.podcast_episode < 0) {
+      this.response.speak("Dies ist die älteste Podcast Episode.");
+      this.emit(':responseReady');
+    }else{
+      // When request comes from PlayPodcastIntent it's redirecting to that intent when action has been taken.
+      console.log("Current Intent Previous: " + currently_playing.intent);
+      if (currently_playing.intent === 'PlayPodcastIntent') {
+        currently_playing.podcast_episode = currently_playing.podcast_episode-1;
+        this.emit('PlayPodcastIntent');
+      } else {
+        currently_playing.podcast_episode = currently_playing.podcast_episode-1;
+        currently_playing.intent = this.event.request.intent.name;
+        this.emit('PlayPodcastWithNameIntent');
+      }
     }
+    console.log("Current Intent Previous second: " + currently_playing.intent);
   },
   'AMAZON.PauseIntent': function() {
-
     // Stops the livestream or podcast audio.
     this.response.speak('Alles klar. Ich stoppe den Audio Player').audioPlayerStop();
     this.emit(':responseReady');
