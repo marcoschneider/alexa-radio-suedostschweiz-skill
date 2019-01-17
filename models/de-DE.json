@@ -7,14 +7,14 @@
           "name": "PlayRadioIntent",
           "slots": [],
           "samples": [
-            "spiele Radio",
-            "starte Radio",
-            "starte den Radio von Südostschweiz",
-            "spiele das Radio",
-            "radio Südostschweiz.",
-            "spiele Radio Südostschweiz",
+            "spiele den radio",
+            "spiele radio ab",
             "radio abspielen",
-            "frage Südostschweiz um den Radio zu starten"
+            "frage Radio Südostschweiz um den Radio zu starten",
+            "spiele Radio",
+            "spiele den Radio Livestream",
+            "starte den Radio Livestream",
+            "spiele den Radio ab"
           ]
         },
         {
@@ -22,9 +22,9 @@
           "slots": [],
           "samples": [
             "starte Podcasts von Radio Südostschweiz",
-            "spiele Podcasts von Radio Südostschweiz",
             "frage Radio Südostschweiz einen Podcast zu spielen",
             "starte Podcasts",
+            "spiele den Podcast von Südostschweiz",
             "spiele Podcasts"
           ]
         },
@@ -33,13 +33,7 @@
           "slots": [
             {
               "name": "podcast_name",
-              "type": "podcastType",
-              "samples": [
-                "starte {podcast_name}",
-                "spiele {podcast_name}",
-                "ich möchte den Podcast {podcast_name} höhren",
-                "{podcast_name}"
-              ]
+              "type": "podcastType"
             }
           ],
           "samples": [
@@ -104,7 +98,6 @@
       ],
       "types": [
         {
-          "name": "podcastType",
           "values": [
             {
               "id": "1",
@@ -121,40 +114,31 @@
                 ]
               }
             }
-          ]
-        }
-      ]
-    },
-    "dialog": {
-      "intents": [
+          ],
+          "name": "podcastType"
+        },
         {
-          "name": "PlayPodcastWithNameIntent",
-          "confirmationRequired": false,
-          "prompts": {},
-          "slots": [
+          "values": [
             {
-              "name": "podcast_name",
-              "type": "podcastType",
-              "confirmationRequired": false,
-              "elicitationRequired": true,
-              "prompts": {
-                "elicitation": "Elicit.Slot.440001648188.653590346939"
+              "name": {
+                "value": "100 Sekunden",
+                "synonyms": [
+                  "einhundert sekunden"
+                ]
+              }
+            },
+            {
+              "name": {
+                "value": "RSO im Gespräch",
+                "synonyms": [
+                  "rso im gespraech"
+                ]
               }
             }
-          ]
+          ],
+          "name": "PODCAST_TYPE"
         }
       ]
-    },
-    "prompts": [
-      {
-        "id": "Elicit.Slot.440001648188.653590346939",
-        "variations": [
-          {
-            "type": "PlainText",
-            "value": "Welchen Podcast möchtest du höhren?"
-          }
-        ]
-      }
-    ]
+    }
   }
 }
