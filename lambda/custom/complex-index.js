@@ -19,7 +19,7 @@ const LaunchRequestHandler = {
     const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
 
     const speakOutput = requestAttributes.t('WELCOME_MESSAGE', requestAttributes.t('SKILL_NAME'));
-    const repromptOutput = requestAttributes.t('WELCOME_REPROMPT');
+    const repromptOutput = requestAttributes.t('WELCOME_REPROMT');
 
     handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
 
@@ -127,7 +127,7 @@ const LoadPersistentAttributesRequestInterceptor = {
           shuffle: false,
         },
         playbackInfo: {
-          playOrder: [...Array(constants.audioData.length).keys()],
+          playOrder: [...Array(constants.PODCASTS.length).keys()],
           index: 0,
           offsetInMilliseconds: 0,
           playbackIndexChanged: true,
@@ -308,7 +308,7 @@ async function getPlaybackInfo(handlerInput) {
 }
 
 const controller = {
-  async play(handlerInput) {
+  async playPodcast(handlerInput) {
     const {
       attributesManager,
       responseBuilder

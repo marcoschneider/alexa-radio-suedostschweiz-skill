@@ -33,7 +33,7 @@
           "slots": [
             {
               "name": "podcast_name",
-              "type": "podcastType"
+              "type": "LIST_OF_PODCASTS"
             }
           ],
           "samples": [
@@ -63,11 +63,16 @@
         },
         {
           "name": "AMAZON.StopIntent",
-          "samples": []
+          "samples": [
+            "stop",
+            "beenden"
+          ]
         },
         {
           "name": "AMAZON.CancelIntent",
-          "samples": []
+          "samples": [
+            "abbrechen"
+          ]
         },
         {
           "name": "AMAZON.StartOverIntent",
@@ -81,6 +86,7 @@
           "name": "ListAllPodcastsIntent",
           "slots": [],
           "samples": [
+            "liste mir alle Podcasts von Radio Südostschweiz auf",
             "liste von Podcasts",
             "frage Radio Südostschweiz mir alle Podcasts aufzulisten",
             "welche Podcasts gibt es",
@@ -120,6 +126,7 @@
         {
           "values": [
             {
+              "id": "1",
               "name": {
                 "value": "100 Sekunden",
                 "synonyms": [
@@ -128,6 +135,7 @@
               }
             },
             {
+              "id": "0",
               "name": {
                 "value": "RSO im Gespräch",
                 "synonyms": [
@@ -136,7 +144,7 @@
               }
             }
           ],
-          "name": "PODCAST_TYPE"
+          "name": "LIST_OF_PODCASTS"
         }
       ]
     }
