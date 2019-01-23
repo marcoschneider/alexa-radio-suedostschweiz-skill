@@ -13,7 +13,8 @@ const LaunchRequestHandler = {
     //console.log("Launch Request: " + util.inspect(handleInput, {showHidden: false, depth: null}));
     return handleInput.requestEnvelope.request.type === 'LaunchRequest';
   },
-  handle(handlerInput) {
+  async handle(handlerInput) {
+    await getPodcastEpisodes(handlerInput);
     const requestAttributes = handlerInput.attributesManager.getRequestAttributes();
 
     const speakOutput = requestAttributes.t('WELCOME_MESSAGE', requestAttributes.t('SKILL_NAME'));
@@ -65,21 +66,13 @@ const PlayPodcastWithNameHandler = {
     return handleInput.requestEnvelope.request.type === 'IntentRequest'
         && handleInput.requestEnvelope.request.intent.name === 'PlayPodcastWithNameIntent';
   },
-  handle: function (handlerInput) {
+  handle(handlerInput) {
     const itemSlot = handlerInput.requestEnvelope.request.intent.slots.podcast_name;
 
     if (itemSlot) {
       if (itemSlot.resolutions.resolutionsPerAuthority[0].status.code !== 'ER_SUCCESS_NO_MATCH') {
-        console.log("Item value: " + util.inspect(itemSlot.resolutions.resolutionsPerAuthority[0].values[0].value.id, {
-          showHidden: false,
-          depth: null
-        }));
-
         let podcast_id = itemSlot.resolutions.resolutionsPerAuthority[0].values[0].value.id;
-
-        getPodcastEpisodes(podcast_id, handlerInput);
-
-        return controller.playPodcast(handlerInput);
+        return controller.playPodcast(handlerInput, podcast_id);
       } else {
         return handlerInput.responseBuilder
             .speak("Ich konnte diesen Podcast nicht finden")
@@ -87,7 +80,8 @@ const PlayPodcastWithNameHandler = {
       }
     }else{
       return handlerInput.responseBuilder
-          .speak("Ich konnte diesen Podcast nicht finden")
+          .speak("Ich habe dich anscheinend nicht ganz verstanden.")
+          .reprompt("Wiederhole deinen Befehl nochmals.")
           .getResponse();
     }
   }
@@ -119,6 +113,70 @@ const ErrorHandler = {
   },
 };
 
+const AudioPlayerHandler = {
+  canHandle(handleInput) {
+    return handleInput.requestEnvelope.request.type.startsWith('AudioPlayer.');
+  },
+  async handle(handlerInput) {
+    const audioPlayerEventName = handlerInput.requestEnvelope.request.type.split('.')[1];
+    const attributes = await handlerInput.attributesManager.getPersistentAttributes();
+    const playbackInfo = attributes.playbackInfo;
+    const podcasts = attributes.currentPodcastEpisodes;
+    const playbackSetting = attributes.playbackSetting;
+    const podcastInfo = attributes.podcastInfo;
+    switch (audioPlayerEventName) {
+      case 'PlaybackStarted':
+        playbackInfo.token = getToken(handlerInput);
+        playbackInfo.index = await getIndex(handlerInput);
+        playbackInfo.inPlaybackSession = true;
+        playbackInfo.hasPreviousPlaybackSession = true;
+      break;
+      case 'PlaybackFinished':
+        playbackInfo.inPlaybackSession = false;
+        playbackInfo.hasPreviousPlaybackSession = false;
+        playbackInfo.nextStreamEnqueued = false;
+      break;
+      case 'PlaybackStopped':
+        playbackInfo.token = getToken(handlerInput);
+        playbackInfo.index = await getIndex(handlerInput);
+        playbackInfo.offsetInMilliseconds = getOffsetInMilliseconds(handlerInput);
+      break;
+      case 'PlaybackNearlyFinished':
+      {
+        if (playbackInfo.nextStreamEnqueued) {
+          break;
+        }
+
+        if (!playbackSetting.loop) {
+          break;
+        }
+
+        playbackInfo.nextStreamEnqueued = true;
+
+        const playBehavior = 'ENQUEUE';
+        const podcast = podcasts[podcastInfo.current_episode_number -1];
+        const expectedPreviousToken = playbackInfo.token;
+        const offsetInMilliseconds = 0;
+
+        handlerInput.responseBuilder.addAudioPlayerPlayDirective(
+            playBehavior,
+            podcast,
+            podcast,
+            offsetInMilliseconds,
+            expectedPreviousToken,
+        );
+        break;
+      }
+      case 'PlaybackFailed':
+        playbackInfo.inPlaybackSession = false;
+        console.log('Playback Failed : %j', handlerInput.requestEnvelope.request.error);
+      return;
+
+    }
+    return handlerInput.responseBuilder.getResponse();
+  }
+};
+
 /* CONSTANTS */
 const skillBuilder = Alexa.SkillBuilders.standard();
 
@@ -140,20 +198,24 @@ const controller = {
           .getResponse();
     }
   },
-  async playPodcast(handlerInput) {
-    const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+  playPodcast(handlerInput, podcast_id) {
+    const persistentAttributes = handlerInput.attributesManager.getPersistentAttributes();
     const podcastInfo = persistentAttributes.podcastInfo;
+
+    const playBehavior = 'REPLACE_ALL';
 
     console.log("Persistence: " + util.inspect(podcastInfo, {
       showHidden: false,
       depth: null
     }));
 
-    const playBehavior = 'REPLACE_ALL';
-
     if (podcastInfo !== undefined) {
+      console.log("Persistence when podcast is defined: " + util.inspect(podcastInfo, {
+        showHidden: false,
+        depth: null
+      }));
       return handlerInput.responseBuilder
-          .speak(`Hier der Podcast ${podcastInfo.podcast_name}, Episode ${podcastInfo.current_episode_number}.`)
+          .speak(`Hier der Podcast: ${podcastInfo.podcast_name}. Episode ${podcastInfo.current_episode_number}.`)
           .addAudioPlayerPlayDirective(playBehavior, podcastInfo.podcast_episodes, podcastInfo.podcast_episodes, null, 0)
           .getResponse();
     }else{
@@ -307,11 +369,6 @@ async function getPlaybackInfo(handlerInput) {
   return attributes.playbackInfo;
 }
 
-async function getPodcastInfos(handlerInput) {
-  const attributes = await handlerInput.attributesManager.getPersistentAttributes();
-  return attributes.podcastInfo;
-}
-
 function getToken(handlerInput) {
   // Extracting token received in the request.
   return handlerInput.requestEnvelope.context.AudioPlayer.token;
@@ -330,135 +387,64 @@ function getOffsetInMilliseconds(handlerInput) {
   return handlerInput.requestEnvelope.context.AudioPlayer.offsetInMilliseconds;
 }
 
-function getPodcastEpisodes(index, handlerInput) {
+function getPodcastEpisodes(handlerInput) {
   let podcast_episode_url = "";
-  https.get(constants.settings.PODCASTS[index].podcastURL, (resp) => {
-    let data = '';
+  for (let i = 0; i > constants.settings.PODCASTS.length; i++) {
+    https.get(constants.settings.PODCASTS[i].podcastURL, (resp) => {
+      let data = '';
 
-    // A chunk of data has been recieved.
-    resp.on('data', (chunk) => {
-      data += chunk;
-    });
-
-    resp.on('end', () => {
-      parseString(data, async function (err, result) {
-        if (!err) {
-          let podcast_episode_urls = [];
-          let number_of_episodes = result.rss.channel[0]["item"].length;
-          for (let i = 0; i < number_of_episodes; i++ ) {
-            podcast_episode_url = result.rss.channel[0]["item"][i]["enclosure"][0]["$"]["url"];
-            podcast_episode_urls.push(podcast_episode_url);
-          }
-          podcast_episode_urls.reverse();
-
-          const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
-
-          persistentAttributes.podcastInfo = {
-            podcast_episodes: podcast_episode_url,
-            podcast_name: result.rss.channel[0].title[0],
-            max_number_of_podcasts_episodes: number_of_episodes -1,
-            current_episode_number: number_of_episodes -1
-          };
-
-          console.log("Persistence at http" + util.inspect(persistentAttributes, {
-            showHidden: false,
-            depth: null
-          }));
-
-          handlerInput.attributesManager.setPersistentAttributes(persistentAttributes);
-          handlerInput.attributesManager.savePersistentAttributes();
-        } else {
-          const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
-          persistentAttributes.podcastInfo = {error: err};
-
-          handlerInput.attributesManager.setPersistentAttributes(persistentAttributes);
-          handlerInput.attributesManager.savePersistentAttributes();
-        }
+      // A chunk of data has been recieved.
+      resp.on('data', (chunk) => {
+        data += chunk;
       });
+
+      resp.on('end', () => {
+        parseString(data, async function (err, result) {
+          if (!err) {
+            let podcast_episode_urls = [];
+            let number_of_episodes = result.rss.channel[0]["item"].length;
+            for (let i = 0; i < number_of_episodes; i++ ) {
+              podcast_episode_url = result.rss.channel[0]["item"][i]["enclosure"][0]["$"]["url"];
+              podcast_episode_urls.push(podcast_episode_url);
+            }
+            podcast_episode_urls.reverse();
+
+            const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+
+            persistentAttributes.podcast[i] = {
+              podcast_episodes: podcast_episode_url,
+              podcast_name: result.rss.channel[0].title[0],
+              max_number_of_podcasts_episodes: number_of_episodes -1,
+              current_episode_number: number_of_episodes -1,
+              currentPodcastEpisodes: podcast_episode_urls
+            };
+
+            console.log("Persistence at http" + util.inspect(persistentAttributes, {
+              showHidden: false,
+              depth: null
+            }));
+
+            handlerInput.attributesManager.setPersistentAttributes(persistentAttributes);
+            return handlerInput.attributesManager.savePersistentAttributes();
+          } else {
+            const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+            persistentAttributes.podcastInfo = {error: err};
+
+            handlerInput.attributesManager.setPersistentAttributes(persistentAttributes);
+          }
+        });
+      });
+
+    }).on("error", (err) => {
+      console.log("Error: " + err.message);
     });
-
-  }).on("error", (err) => {
-    console.log("Error: " + err.message);
-  });
+  }
 }
-
-/*const AudioPlayerEventHandler = {
-  canHandle(handlerInput) {
-    return handlerInput.requestEnvelope.request.type.startsWith('AudioPlayer.');
-  },
-  async handle(handlerInput) {
-    const {
-      requestEnvelope,
-      attributesManager,
-      responseBuilder
-    } = handlerInput;
-    const audioPlayerEventName = requestEnvelope.request.type.split('.')[1];
-    const {
-      playbackSetting,
-      playbackInfo
-    } = await attributesManager.getPersistentAttributes();
-
-    switch (audioPlayerEventName) {
-      case 'PlaybackStarted':
-        playbackInfo.token = getToken(handlerInput);
-        playbackInfo.index = await getIndex(handlerInput);
-        playbackInfo.inPlaybackSession = true;
-        playbackInfo.hasPreviousPlaybackSession = true;
-        break;
-      case 'PlaybackFinished':
-        playbackInfo.inPlaybackSession = false;
-        playbackInfo.hasPreviousPlaybackSession = false;
-        playbackInfo.nextStreamEnqueued = false;
-        break;
-      case 'PlaybackStopped':
-        playbackInfo.token = getToken(handlerInput);
-        playbackInfo.index = await getIndex(handlerInput);
-        playbackInfo.offsetInMilliseconds = getOffsetInMilliseconds(handlerInput);
-        break;
-      case 'PlaybackNearlyFinished':
-      {
-        if (playbackInfo.nextStreamEnqueued) {
-          break;
-        }
-
-        const enqueueIndex = (playbackInfo.index + 1) % constants.audioData.length;
-
-        if (enqueueIndex === 0 && !playbackSetting.loop) {
-          break;
-        }
-
-        playbackInfo.nextStreamEnqueued = true;
-
-        const enqueueToken = playbackInfo.playOrder[enqueueIndex];
-        const playBehavior = 'ENQUEUE';
-        const podcast = constants.audioData[playbackInfo.playOrder[enqueueIndex]];
-        const expectedPreviousToken = playbackInfo.token;
-        const offsetInMilliseconds = 0;
-
-        responseBuilder.addAudioPlayerPlayDirective(
-            playBehavior,
-            podcast.url,
-            enqueueToken,
-            offsetInMilliseconds,
-            expectedPreviousToken,
-        );
-        break;
-      }
-      case 'PlaybackFailed':
-        playbackInfo.inPlaybackSession = false;
-        console.log('Playback Failed : %j', handlerInput.requestEnvelope.request.error);
-        return;
-      default:
-        throw new Error('Should never reach here!');
-    }
-
-    return responseBuilder.getResponse();
-  },
-};*/
 
 /* LAMBDA SETUP */
 exports.handler = skillBuilder
   .addRequestHandlers(
+      AudioPlayerHandler,
       CheckAudioInterfaceHandler,
       PausePlaybackHandler,
       StartPlaybackHandler,

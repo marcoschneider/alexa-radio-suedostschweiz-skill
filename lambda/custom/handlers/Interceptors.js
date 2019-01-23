@@ -42,7 +42,7 @@ const LoadPersistentAttributesRequestInterceptor = {
           inPlaybackSession: false,
           hasPreviousPlaybackSession: false,
         },
-        podcastInfo: {}
+        podcasts: []
       });
     }
   },

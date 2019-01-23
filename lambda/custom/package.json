@@ -18,7 +18,8 @@
     "https": "^1.0.0",
     "i18next": "^10.5.0",
     "i18next-sprintf-postprocessor": "^0.2.2",
-    "xml2js": "^0.4.19"
+    "xml2js": "^0.4.19",
+    "xml2json": "^0.11.2"
   },
   "repository": {
     "type": "git",
