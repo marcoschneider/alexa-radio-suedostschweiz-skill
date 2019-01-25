@@ -33,8 +33,7 @@ const LoadPersistentAttributesRequestInterceptor = {
           shuffle: false,
         },
         playbackInfo: {
-          playOrder: [...Array(settings.PODCASTS.length).keys()],
-          index: 0,
+          podcast_index: "",
           offsetInMilliseconds: 0,
           playbackIndexChanged: true,
           token: '',

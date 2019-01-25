@@ -12,7 +12,7 @@ const settings = {
     {
       title: "Podcast von Radio Südostschweiz.",
       subtitle: "Alexa podcast streaming skill for Radio Südostschweiz",
-      name: "100 Sekunden",
+      name: "R S O in 100 Sekunden",
       podcastURL: "https://www.suedostschweiz.ch/podcasts/feed/2393476",
       id: "1"
     }

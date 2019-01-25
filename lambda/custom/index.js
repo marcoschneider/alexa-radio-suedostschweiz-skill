@@ -127,7 +127,6 @@ const AudioPlayerHandler = {
     switch (audioPlayerEventName) {
       case 'PlaybackStarted':
         playbackInfo.token = getToken(handlerInput);
-        playbackInfo.index = await getIndex(handlerInput);
         playbackInfo.inPlaybackSession = true;
         playbackInfo.hasPreviousPlaybackSession = true;
       break;
@@ -138,7 +137,6 @@ const AudioPlayerHandler = {
       break;
       case 'PlaybackStopped':
         playbackInfo.token = getToken(handlerInput);
-        playbackInfo.index = await getIndex(handlerInput);
         playbackInfo.offsetInMilliseconds = getOffsetInMilliseconds(handlerInput);
       break;
       case 'PlaybackNearlyFinished':
@@ -198,30 +196,24 @@ const controller = {
           .getResponse();
     }
   },
-  playPodcast(handlerInput, podcast_id) {
-    const persistentAttributes = handlerInput.attributesManager.getPersistentAttributes();
-    const podcastInfo = persistentAttributes.podcastInfo;
+  async playPodcast(handlerInput, podcast_id) {
+    const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
+    const podcasts = persistentAttributes.podcasts;
 
     const playBehavior = 'REPLACE_ALL';
-
-    console.log("Persistence: " + util.inspect(podcastInfo, {
-      showHidden: false,
-      depth: null
-    }));
-
-    if (podcastInfo !== undefined) {
-      console.log("Persistence when podcast is defined: " + util.inspect(podcastInfo, {
-        showHidden: false,
-        depth: null
-      }));
+    if (typeof podcasts !== 'undefined' && podcasts.length > 0) {
+      let podcast = podcasts[podcast_id];
+      persistentAttributes.playbackInfo.podcast_index = podcast_id;
+      handlerInput.attributesManager.setPersistentAttributes(persistentAttributes);
+      handlerInput.attributesManager.savePersistentAttributes();
       return handlerInput.responseBuilder
-          .speak(`Hier der Podcast: ${podcastInfo.podcast_name}. Episode ${podcastInfo.current_episode_number}.`)
-          .addAudioPlayerPlayDirective(playBehavior, podcastInfo.podcast_episodes, podcastInfo.podcast_episodes, null, 0)
+          .speak(`Hier der Podcast: ${podcast.podcast_name}. Episode ${podcast.current_episode_number}.`)
+          .addAudioPlayerPlayDirective(playBehavior, podcast.podcast_episodes, podcast.podcast_episodes, null, 0)
           .getResponse();
     }else{
-      console.log(`Error: ${podcastInfo}`);
+      console.log(`Error: ${podcasts}`);
       return handlerInput.responseBuilder
-          .speak("Ich kann den Podcast nicht abspielen!")
+          .speak("Hmm. Versuche zuerst den Skill mit, Starte Radio Südostschweiz, zu starten, um die Podcasts abspielen zu können.")
           .getResponse();
     }
   },
@@ -245,51 +237,49 @@ const controller = {
         .getResponse();
   },
   async playNext(handlerInput) {
-    const {
-      playbackInfo,
-      playbackSetting,
-    } = await handlerInput.attributesManager.getPersistentAttributes();
+    const attributes = await handlerInput.attributesManager.getPersistentAttributes();
+    let podcasts = attributes.podcasts;
+    let podcast_id = attributes.playbackInfo.podcast_index;
+    let podcast = podcasts[podcast_id];
 
-    const nextIndex = (playbackInfo.index + 1) % constants.settings.PODCASTS.length;
+    console.log(podcasts);
+    console.log(podcast);
+    console.log(podcast_id);
 
-    if (nextIndex === 0 && !playbackSetting.loop) {
+    if (podcast.current_episode_number === podcast.max_number_of_podcasts_episodes) {
       return handlerInput.responseBuilder
-          .speak('You have reached the end of the playlist')
-          .addAudioPlayerStopDirective()
+          .speak('Dies ist die aktuellste Podcast Episode')
           .getResponse();
     }
-
-    playbackInfo.index = nextIndex;
-    playbackInfo.offsetInMilliseconds = 0;
-    playbackInfo.playbackIndexChanged = true;
-
-    return this.playPodcast(handlerInput);
+    attributes.podcasts[podcast_id].podcast_episodes = podcast.currentPodcastEpisodes[podcast.current_episode_number + 1];
+    attributes.podcasts[podcast_id].current_episode_number = podcast.current_episode_number + 1;
+    attributes.playbackInfo.offsetInMilliseconds = 0;
+    attributes.playbackInfo.playbackIndexChanged = true;
+    handlerInput.attributesManager.savePersistentAttributes();
+    return this.playPodcast(handlerInput, podcast_id);
   },
   async playPrevious(handlerInput) {
-    const {
-      playbackInfo,
-      playbackSetting,
-    } = await handlerInput.attributesManager.getPersistentAttributes();
+    const attributes = await handlerInput.attributesManager.getPersistentAttributes();
+    let podcasts = attributes.podcasts;
+    let podcast_id = attributes.playbackInfo.podcast_index;
+    let podcast = podcasts[podcast_id];
 
-    let previousIndex = playbackInfo.index - 1;
+    console.log(podcasts);
+    console.log(podcast);
+    console.log(podcast_id);
 
-    if (previousIndex === -1) {
-      if (playbackSetting.loop) {
-        previousIndex += constants.settings.PODCASTS.length;
-      } else {
-        return handlerInput.responseBuilder
-            .speak('Dies ist die erste Episode.')
-            .addAudioPlayerStopDirective()
-            .getResponse();
-      }
+    if (podcast.current_episode_number === 0) {
+      return handlerInput.responseBuilder
+          .speak('Dies ist die letzte Podcast Episode')
+          .getResponse();
     }
-
-    playbackInfo.index = previousIndex;
-    playbackInfo.offsetInMilliseconds = 0;
-    playbackInfo.playbackIndexChanged = true;
-
-    return this.playPodcast(handlerInput);
-  },
+    attributes.podcasts[podcast_id].podcast_episodes = podcast.currentPodcastEpisodes[podcast.current_episode_number - 1];
+    attributes.podcasts[podcast_id].current_episode_number = podcast.current_episode_number - 1;
+    attributes.playbackInfo.offsetInMilliseconds = 0;
+    attributes.playbackInfo.playbackIndexChanged = true;
+    handlerInput.attributesManager.savePersistentAttributes();
+    return this.playPodcast(handlerInput, podcast_id);
+  }
 };
 
 const ExitHandler = {
@@ -314,7 +304,7 @@ const ExitHandler = {
     return handlerInput.responseBuilder
         .speak('Auf wiedersehen!')
         .getResponse();
-  },
+  }
 };
 
 /*Audio Event Handler*/
@@ -328,7 +318,7 @@ const CheckAudioInterfaceHandler = {
         .speak('Sorry, dieser Skill wird nicht auf Ihrem Gerät unterstützt.')
         .withShouldEndSession(true)
         .getResponse();
-  },
+  }
 };
 
 const PausePlaybackHandler = {
@@ -344,7 +334,7 @@ const PausePlaybackHandler = {
   },
   handle(handlerInput) {
     return controller.pause(handlerInput);
-  },
+  }
 };
 
 const StartPlaybackHandler = {
@@ -361,6 +351,34 @@ const StartPlaybackHandler = {
   },
   handle(handlerInput) {
     return controller.resume(handlerInput);
+  }
+};
+
+const NextPlaybackHandler = {
+  async canHandle(handlerInput) {
+    const playbackInfo = await getPlaybackInfo(handlerInput);
+    const request = handlerInput.requestEnvelope.request;
+
+    return playbackInfo.inPlaybackSession &&
+        (request.type === 'PlaybackController.NextCommandIssued' ||
+            (request.type === 'IntentRequest' && request.intent.name === 'AMAZON.NextIntent'));
+  },
+  handle(handlerInput) {
+    return controller.playNext(handlerInput);
+  }
+};
+
+const PreviousPlaybackHandler = {
+  async canHandle(handlerInput) {
+    const playbackInfo = await getPlaybackInfo(handlerInput);
+    const request = handlerInput.requestEnvelope.request;
+
+    return playbackInfo.inPlaybackSession &&
+        (request.type === 'PlaybackController.PreviousCommandIssued' ||
+            (request.type === 'IntentRequest' && request.intent.name === 'AMAZON.PreviousIntent'));
+  },
+  handle(handlerInput) {
+    return controller.playPrevious(handlerInput);
   },
 };
 
@@ -374,14 +392,6 @@ function getToken(handlerInput) {
   return handlerInput.requestEnvelope.context.AudioPlayer.token;
 }
 
-async function getIndex(handlerInput) {
-  // Extracting index from the token received in the request.
-  const tokenValue = parseInt(handlerInput.requestEnvelope.request.token, 10);
-  const attributes = await handlerInput.attributesManager.getPersistentAttributes();
-
-  return attributes.playbackInfo.playOrder.indexOf(tokenValue);
-}
-
 function getOffsetInMilliseconds(handlerInput) {
   // Extracting offsetInMilliseconds received in the request.
   return handlerInput.requestEnvelope.context.AudioPlayer.offsetInMilliseconds;
@@ -389,7 +399,7 @@ function getOffsetInMilliseconds(handlerInput) {
 
 function getPodcastEpisodes(handlerInput) {
   let podcast_episode_url = "";
-  for (let i = 0; i > constants.settings.PODCASTS.length; i++) {
+  for (let i = 0; i < constants.settings.PODCASTS.length; i++) {
     https.get(constants.settings.PODCASTS[i].podcastURL, (resp) => {
       let data = '';
 
@@ -411,9 +421,9 @@ function getPodcastEpisodes(handlerInput) {
 
             const persistentAttributes = await handlerInput.attributesManager.getPersistentAttributes();
 
-            persistentAttributes.podcast[i] = {
+            persistentAttributes.podcasts[i] = {
               podcast_episodes: podcast_episode_url,
-              podcast_name: result.rss.channel[0].title[0],
+              podcast_name: constants.settings.PODCASTS[i].name,
               max_number_of_podcasts_episodes: number_of_episodes -1,
               current_episode_number: number_of_episodes -1,
               currentPodcastEpisodes: podcast_episode_urls
@@ -451,6 +461,8 @@ exports.handler = skillBuilder
       LaunchRequestHandler,
       SessionEndedRequestHandler,
       PlayRadioHandler,
+      NextPlaybackHandler,
+      PreviousPlaybackHandler,
       PlayPodcastWithNameHandler,
       ListAllPodcastsIntent,
       ExitHandler
