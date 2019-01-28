@@ -2,7 +2,7 @@
   "name": "Audio Stream Starter Skill Template",
   "version": "1.0.0",
   "description": "A starter template for an Alexa audio streaming skill.",
-  "main": "test-index.js",
+  "main": "index.js",
   "keywords": [
     "alexa",
     "skill",
