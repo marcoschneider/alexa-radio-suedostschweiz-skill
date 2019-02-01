@@ -12,7 +12,15 @@
   "license": "See license in ../LICENSE.txt",
   "dependencies": {
     "alexa-sdk": "^1.0.25",
+    "ask-sdk": "^2.3.0",
+    "ask-sdk-core": "^2.3.0",
+    "ask-sdk-model": "^1.11.2",
+    "axios": "^0.18.0",
+    "fast-xml-parser": "^3.12.12",
+    "got": "^9.6.0",
     "https": "^1.0.0",
+    "i18next": "^10.5.0",
+    "i18next-sprintf-postprocessor": "^0.2.2",
     "xml2js": "^0.4.19"
   },
   "repository": {

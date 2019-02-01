@@ -7,26 +7,14 @@
           "name": "PlayRadioIntent",
           "slots": [],
           "samples": [
-            "spiele Radio",
-            "starte Radio",
-            "starte den Radio von Südostschweiz",
-            "spiele das Radio",
-            "radio Südostschweiz.",
-            "spiele Radio Südostschweiz",
+            "spiele den radio",
+            "spiele radio ab",
             "radio abspielen",
-            "frage Südostschweiz um den Radio zu starten"
-          ]
-        },
-        {
-          "name": "PlayPodcastIntent",
-          "slots": [],
-          "samples": [
-            "starte Podcasts von Radio Südostschweiz",
-            "frage Radio Südostschweiz einen Podcast zu spielen",
-            "spiele den Podcast von Radio Südostschweiz",
-            "starte Podcasts",
-            "spiele den Podcast von Südostschweiz",
-            "spiele Podcasts"
+            "frage Radio Südostschweiz um den Radio zu starten",
+            "spiele Radio",
+            "spiele den Radio Livestream",
+            "starte den Radio Livestream",
+            "spiele den Radio ab"
           ]
         },
         {
@@ -34,13 +22,7 @@
           "slots": [
             {
               "name": "podcast_name",
-              "type": "podcastType",
-              "samples": [
-                "starte {podcast_name}",
-                "spiele {podcast_name}",
-                "ich möchte den Podcast {podcast_name} höhren",
-                "{podcast_name}"
-              ]
+              "type": "LIST_OF_PODCASTS"
             }
           ],
           "samples": [
@@ -70,11 +52,16 @@
         },
         {
           "name": "AMAZON.StopIntent",
-          "samples": []
+          "samples": [
+            "stop",
+            "beenden"
+          ]
         },
         {
           "name": "AMAZON.CancelIntent",
-          "samples": []
+          "samples": [
+            "abbrechen"
+          ]
         },
         {
           "name": "AMAZON.StartOverIntent",
@@ -88,6 +75,7 @@
           "name": "ListAllPodcastsIntent",
           "slots": [],
           "samples": [
+            "liste mir alle Podcasts von Radio Südostschweiz auf",
             "liste von Podcasts",
             "frage Radio Südostschweiz mir alle Podcasts aufzulisten",
             "welche Podcasts gibt es",
@@ -101,55 +89,59 @@
         {
           "name": "AMAZON.PreviousIntent",
           "samples": []
+        },
+        {
+          "name": "PlayPodcastByEpisodeIntent",
+          "slots": [
+            {
+              "name": "podcast_episode",
+              "type": "AMAZON.NUMBER"
+            },
+            {
+              "name": "podcast_name",
+              "type": "LIST_OF_PODCASTS"
+            }
+          ],
+          "samples": [
+            "spiele den Podcast {podcast_name} Episode {podcast_episode}"
+          ]
         }
       ],
       "types": [
         {
-          "name": "podcastType",
           "values": [
             {
+<<<<<<< HEAD
+=======
+              "id": "1",
+              "name": {
+                "value": "R S O in 100 Sekunden",
+                "synonyms": [
+                  "aliso in einhundert sekunden",
+                  "ereso in einhundert sekunden",
+                  "einhundert sekunden"
+                ]
+              }
+            },
+            {
+>>>>>>> develop
               "id": "0",
               "name": {
-                "value": "RSO im Gespräch",
+                "value": "R S O im Gespräch",
                 "synonyms": [
-                  "RSOIm gespräch"
+                  "ereso im gespräch",
+                  "aliso IM gespräch",
+                  "Edisto IM gespräch",
+                  "erst so IM gespräch",
+                  "erde so im gespräch",
+                  "rso im gespraech"
                 ]
               }
             }
-          ]
+          ],
+          "name": "LIST_OF_PODCASTS"
         }
       ]
-    },
-    "dialog": {
-      "intents": [
-        {
-          "name": "PlayPodcastWithNameIntent",
-          "confirmationRequired": false,
-          "prompts": {},
-          "slots": [
-            {
-              "name": "podcast_name",
-              "type": "podcastType",
-              "confirmationRequired": false,
-              "elicitationRequired": true,
-              "prompts": {
-                "elicitation": "Elicit.Slot.440001648188.653590346939"
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "prompts": [
-      {
-        "id": "Elicit.Slot.440001648188.653590346939",
-        "variations": [
-          {
-            "type": "PlainText",
-            "value": "Welchen Podcast möchtest du höhren?"
-          }
-        ]
-      }
-    ]
+    }
   }
 }
