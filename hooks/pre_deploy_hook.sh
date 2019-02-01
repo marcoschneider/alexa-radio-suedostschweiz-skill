@@ -15,7 +15,7 @@ SKILL_NAME=$1
 DO_DEBUG=${2:-false}
 TARGET=${3:-"all"}
 
-if [ $DO_DEBUG == false ]
+if [[ ${DO_DEBUG} == false ]]
 then
     exec > /dev/null 2>&1
 fi
@@ -29,9 +29,9 @@ echo "###########################"
 echo "##### pre-deploy hook #####"
 echo "###########################"
 
-if [[ $TARGET == "all" || $TARGET == "lambda" ]]; then
+if [[ ${TARGET} == "all" || ${TARGET} == "lambda" ]]; then
     grep "sourceDir" ./skill.json | cut -d: -f2 |  sed 's/"//g' | sed 's/,//g' | while read -r SOURCE_DIR; do
-        if install_dependencies $SOURCE_DIR; then
+        if install_dependencies ${SOURCE_DIR}; then
             echo "Codebase ($SOURCE_DIR) built successfully."
         else
             echo "There was a problem installing dependencies for ($SOURCE_DIR)."
