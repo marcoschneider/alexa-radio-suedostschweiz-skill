@@ -334,6 +334,18 @@ const ExitHandler = {
   }
 };
 
+const CancelHandler = {
+  canHandle(handlerInput) {
+    const request = handlerInput.requestEnvelope.request;
+    return request.type === 'IntentRequest' && request.intent.name === 'AMAZON.CancelIntent';
+  },
+  handle(handlerInput) {
+    return handlerInput.responseBuilder
+        .speak('Auf wiedersehen!')
+        .getResponse();
+  }
+};
+
 const SystemExceptionHandler = {
   canHandle(handlerInput) {
     return handlerInput.requestEnvelope.request.type === 'System.ExceptionEncountered';
@@ -523,6 +535,7 @@ exports.handler = skillBuilder
       PlayPodcastByEpisodeHandler,
       ListAllPodcastsIntent,
       HelpHandler,
+      CancelHandler,
       ExitHandler,
       SystemExceptionHandler
   )
