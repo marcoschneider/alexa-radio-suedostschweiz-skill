@@ -442,7 +442,7 @@ const HelpHandler = {
     if (!playbackInfo.hasPreviousPlaybackSession) {
       message = 'Willkommen bei Radio Südostschweiz. Mit, spiele Radio, startest du den Livestream von Radio Südostschweiz. Um die Podcasts zu hören, sag: spiele den Podcast, danach den Podcast Namen und zum Schluss musst du noch "von Radio Südostschweiz" sagen, damit ich weiss du möchtest die Podcasts von diesem Skill aus höhren. Was möchtest du machen?';
     } else if (!playbackInfo.inPlaybackSession) {
-      message = `Du hast den Podcast ${constants.settings.PODCASTS[playbackInfo.index].name} zuletzt gehört. Was möchtest du machen?`;
+      message = `Du hast den Podcast ${constants.settings.PODCASTS[playbackInfo.index].name} zuletzt gehört. Mit, spiele Radio, startest du den Livestream von Radio Südostschweiz. Um die Podcasts zu hören, sag: spiele den Podcast, danach den Podcast Namen und zum Schluss musst du noch "von Radio Südostschweiz" sagen, damit ich weiss du möchtest die Podcasts von diesem Skill aus höhren. Was möchtest du machen?`;
     } else {
       message = 'Du hörst Radio Südostschweiz. Um die Podcasts zu hören, sag: spiele den Podcast, danach den Podcast Namen und zum Schluss musst du noch "von Radio Südostschweiz" sagen, damit ich weiss du möchtest die Podcasts von diesem Skill aus höhren. Du kannst zu jeder Zeit pausieren, indem du pause sagst. Um Fortzufahren, sag: Weiter machen oder fortfahren. Wenn du weiter sagst, kannst du die nächste Episode hören. Mit, zurück, kannst du die letzte Episode abspielen. Was möchtest du machen?';
     }
