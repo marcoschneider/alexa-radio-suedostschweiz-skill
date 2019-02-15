@@ -107,7 +107,6 @@ const PlayPodcastByEpisodeHandler = {
       if (podcast_name.resolutions.resolutionsPerAuthority[0].status.code !== 'ER_SUCCESS_NO_MATCH') {
         let podcast_id = podcast_name.resolutions.resolutionsPerAuthority[0].values[0].value.id;
         episode_number = episode_number.value;
-        console.log(episode_number);
         return controller.playPodcast(handlerInput, podcast_id, episode_number);
       } else {
         return handlerInput.responseBuilder
@@ -158,7 +157,6 @@ const AudioPlayerHandler = {
     const audioPlayerEventName = handlerInput.requestEnvelope.request.type.split('.')[1];
     const attributes = await handlerInput.attributesManager.getPersistentAttributes();
     const playbackInfo = attributes.playbackInfo;
-    console.log(audioPlayerEventName);
     switch (audioPlayerEventName) {
       case 'PlaybackStarted':
         playbackInfo.token = getToken(handlerInput);
@@ -175,8 +173,6 @@ const AudioPlayerHandler = {
         playbackInfo.offsetInMilliseconds = getOffsetInMilliseconds(handlerInput);
       break;
       case 'PlaybackNearlyFinished':
-        console.log(handlerInput.requestEnvelope.request.type);
-
         if (playbackInfo.nextStreamEnqueued) {
           break;
         }
