@@ -111,8 +111,6 @@
         {
           "values": [
             {
-<<<<<<< HEAD
-=======
               "id": "1",
               "name": {
                 "value": "R S O in 100 Sekunden",
@@ -124,7 +122,6 @@
               }
             },
             {
->>>>>>> develop
               "id": "0",
               "name": {
                 "value": "R S O im Gespräch",
