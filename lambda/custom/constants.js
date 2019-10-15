@@ -1,5 +1,3 @@
-const Alexa = require('ask-sdk');
-
 const settings = {
   PODCASTS: [
     {
@@ -19,7 +17,7 @@ const settings = {
     title: 'Radio Südostschweiz Livestream',
     subtitle: 'Alexa audio streaming skill for Radio Südostschweiz.',
     cardContent: "Radio Südostschweiz Alexa Skill",
-    url: 'https://swisstxt2-lh.akamaihd.net/i/grischa_1@144003/master.m3u8',
+    url: 'https://radiostream.suedostschweiz.ch',
     image: {
       largeImageUrl: 'https://www.suedostschweiz.ch/modules/custom/so_radio/images/microphon_off.png',
       smallImageUrl: 'https://www.suedostschweiz.ch/modules/custom/so_radio/images/microphon_off.png'
