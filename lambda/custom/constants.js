@@ -17,7 +17,7 @@ const settings = {
     title: 'Radio Südostschweiz Livestream',
     subtitle: 'Alexa audio streaming skill for Radio Südostschweiz.',
     cardContent: "Radio Südostschweiz Alexa Skill",
-    url: 'https://radiostream.suedostschweiz.ch',
+    url: 'https://lsv.swisstxt.ch/rso/livecam_transcode/playlist.m3u8',
     image: {
       largeImageUrl: 'https://www.suedostschweiz.ch/modules/custom/so_radio/images/microphon_off.png',
       smallImageUrl: 'https://www.suedostschweiz.ch/modules/custom/so_radio/images/microphon_off.png'
