@@ -15,7 +15,7 @@
     "ask-sdk": "^2.3.0",
     "ask-sdk-core": "^2.3.0",
     "ask-sdk-model": "^1.11.2",
-    "axios": "^0.18.0",
+    "axios": "^0.21.1",
     "fast-xml-parser": "^3.12.12",
     "got": "^9.6.0",
     "https": "^1.0.0",
