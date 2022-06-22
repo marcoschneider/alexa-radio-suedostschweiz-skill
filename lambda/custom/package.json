@@ -17,7 +17,7 @@
     "ask-sdk-model": "^1.11.2",
     "axios": "^0.18.0",
     "fast-xml-parser": "^3.12.12",
-    "got": "^9.6.0",
+    "got": "^11.8.5",
     "https": "^1.0.0",
     "i18next": "^15.0.4",
     "i18next-sprintf-postprocessor": "^0.2.2",
